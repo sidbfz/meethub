@@ -39,9 +39,6 @@ import {
   useDeleteEvent
 } from '@/lib/hooks/useEvents';
 import { useQueryClient } from '@tanstack/react-query';
-import SimpleEventChat from '@/components/SimpleEventChat';
-import SupabaseRealtimeChat from '@/components/SupabaseRealtimeChat';
-import SupabaseChannelChat from '@/components/SupabaseChannelChat';
 import EventChatSimple from '@/components/EventChatSimple';
 import toast from 'react-hot-toast';
 
