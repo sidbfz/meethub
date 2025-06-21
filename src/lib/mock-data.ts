@@ -1,0 +1,234 @@
+// src/lib/mock-data.ts
+import { Event, User, Message, Conversation, ModerationItem } from './types';
+
+// Mock Users
+export const mockUsers: User[] = [
+  {
+    id: 'user1',
+    name: 'Alice Smith',
+    email: 'alice@example.com',
+    avatarUrl: 'https://i.pravatar.cc/150?img=1',
+    bio: 'Passionate about tech and community building.',
+    location: 'New York, NY',
+    website: 'https://alicesmith.com',
+    interests: ['Technology', 'Startups', 'Networking', 'AI'],
+    eventsHosted: ['event1', 'event3'],
+    eventsAttended: ['event2', 'event4'],
+    memberSince: '2023-01-15',
+  },
+  {
+    id: 'user2',
+    name: 'Bob Johnson',
+    email: 'bob@example.com',
+    avatarUrl: 'https://i.pravatar.cc/150?img=2',
+    bio: 'Loves outdoor activities and meeting new people.',
+    location: 'San Francisco, CA',
+    website: '',
+    interests: ['Hiking', 'Photography', 'Nature', 'Travel'],
+    eventsHosted: ['event2'],
+    eventsAttended: ['event1', 'event3'],
+    memberSince: '2022-11-01',
+  },
+  {
+    id: 'user3',
+    name: 'Charlie Brown',
+    email: 'charlie@example.com',
+    avatarUrl: 'https://i.pravatar.cc/150?img=3',
+    bio: 'Community manager and event organizer.',
+    location: 'Austin, TX',
+    website: 'https://charliebrown.org',
+    interests: ['Community', 'Events', 'Marketing', 'Design'],
+    eventsHosted: [],
+    eventsAttended: ['event1', 'event2', 'event4'],
+    memberSince: '2023-03-20',
+  },
+  {
+    id: 'user4',
+    name: 'Diana Prince',
+    email: 'diana@example.com',
+    avatarUrl: 'https://i.pravatar.cc/150?img=4',
+    bio: 'Enthusiastic about fitness and healthy living.',
+    location: 'Los Angeles, CA',
+    website: '',
+    interests: ['Fitness', 'Yoga', 'Nutrition', 'Wellness'],
+    eventsHosted: ['event4'],
+    eventsAttended: ['event1', 'event2'],
+    memberSince: '2023-06-01',
+  },
+];
+
+// Mock Events
+export const mockEvents: Event[] = [
+  {
+    id: 'event1',
+    title: 'Next.js Conf Watch Party',
+    description: 'Join us to watch the Next.js Conf keynote and network with fellow developers!',
+    category: 'Technology',
+    date: '2025-07-20',
+    time: '10:00',
+    duration: 180,
+    location: {
+      address: '123 Tech Lane, New York, NY',
+      venueName: 'Innovation Hub',
+      lat: 40.7128,
+      lng: -74.0060,
+    },
+    maxParticipants: 50,
+    currentParticipants: 25,
+    host: mockUsers[0], // Alice Smith
+    attendees: [mockUsers[1], mockUsers[2]],
+    imageUrl: 'https://picsum.photos/seed/nextjs/800/400',
+    tags: ['Next.js', 'React', 'Web Development', 'Networking'],
+    approvalRequired: false,
+    status: 'upcoming',
+    createdAt: '2025-06-01T10:00:00Z',
+  },
+  {
+    id: 'event2',
+    title: 'Golden Gate Park Photo Walk',
+    description: 'Explore the beauty of Golden Gate Park through your lens. All skill levels welcome!',
+    category: 'Photography',
+    date: '2025-07-25',
+    time: '14:00',
+    duration: 120,
+    location: {
+      address: 'Golden Gate Park, San Francisco, CA',
+      venueName: 'Conservatory of Flowers',
+      lat: 37.7701,
+      lng: -122.4636,
+    },
+    maxParticipants: 20,
+    currentParticipants: 18,
+    host: mockUsers[1], // Bob Johnson
+    attendees: [mockUsers[0], mockUsers[2], mockUsers[3]],
+    imageUrl: 'https://picsum.photos/seed/park/800/400',
+    tags: ['Photography', 'Nature', 'Outdoors', 'San Francisco'],
+    approvalRequired: false,
+    status: 'upcoming',
+    createdAt: '2025-06-05T11:30:00Z',
+  },
+  {
+    id: 'event3',
+    title: 'AI in Healthcare Panel Discussion',
+    description: 'A deep dive into the ethical and practical implications of AI in modern healthcare.',
+    category: 'Technology',
+    date: '2025-08-01',
+    time: '18:30',
+    duration: 90,
+    location: {
+      address: 'Online Event',
+      venueName: 'Zoom Webinar',
+      lat: 0,
+      lng: 0,
+    },
+    maxParticipants: 200,
+    currentParticipants: 150,
+    host: mockUsers[0], // Alice Smith
+    attendees: [mockUsers[1]],
+    imageUrl: 'https://picsum.photos/seed/aihealth/800/400',
+    tags: ['AI', 'Healthcare', 'Ethics', 'Webinar'],
+    approvalRequired: true,
+    status: 'upcoming',
+    createdAt: '2025-06-10T09:00:00Z',
+  },
+  {
+    id: 'event4',
+    title: 'Morning Yoga & Meditation',
+    description: 'Start your day with a refreshing outdoor yoga and meditation session.',
+    category: 'Wellness',
+    date: '2025-07-22',
+    time: '07:00',
+    duration: 60,
+    location: {
+      address: 'Central Park, New York, NY',
+      venueName: 'Sheep Meadow',
+      lat: 40.7812,
+      lng: -73.9665,
+    },
+    maxParticipants: 30,
+    currentParticipants: 30,
+    host: mockUsers[3], // Diana Prince
+    attendees: [mockUsers[0], mockUsers[1], mockUsers[2]],
+    imageUrl: 'https://picsum.photos/seed/yoga/800/400',
+    tags: ['Yoga', 'Meditation', 'Wellness', 'Outdoors'],
+    approvalRequired: false,
+    status: 'completed',
+    createdAt: '2025-05-20T08:00:00Z',
+  },
+];
+
+// Mock Messages
+export const mockMessages: Message[] = [
+  {
+    id: 'msg1',
+    senderId: 'user1',
+    conversationId: 'conv1',
+    content: 'Hey Bob, looking forward to the photo walk!',
+    timestamp: '2025-07-20T09:00:00Z',
+    read: true,
+  },
+  {
+    id: 'msg2',
+    senderId: 'user2',
+    conversationId: 'conv1',
+    content: 'Me too, Alice! The weather looks perfect.',
+    timestamp: '2025-07-20T09:05:00Z',
+    read: true,
+  },
+  {
+    id: 'msg3',
+    senderId: 'user3',
+    conversationId: 'conv2',
+    content: 'Hi Charlie, just confirming your attendance for the Next.js party.',
+    timestamp: '2025-07-19T15:00:00Z',
+    read: false,
+  },
+  {
+    id: 'msg4',
+    senderId: 'user1',
+    conversationId: 'conv2',
+    content: 'Confirmed! See you there.',
+    timestamp: '2025-07-19T15:10:00Z',
+    read: false,
+  },
+];
+
+// Mock Conversations
+export const mockConversations: Conversation[] = [
+  {
+    id: 'conv1',
+    participants: ['user1', 'user2'],
+    messages: [mockMessages[0], mockMessages[1]],
+    lastMessageAt: '2025-07-20T09:05:00Z',
+    unreadCount: 0,
+  },
+  {
+    id: 'conv2',
+    participants: ['user1', 'user3'],
+    messages: [mockMessages[2], mockMessages[3]],
+    lastMessageAt: '2025-07-19T15:10:00Z',
+    unreadCount: 2,
+  },
+];
+
+// Mock Moderation Items
+export const mockModerationItems: ModerationItem[] = [
+  {
+    id: 'mod1',
+    eventId: 'event3',
+    eventType: 'event',
+    status: 'pending',
+    submittedBy: 'user1',
+    submittedAt: '2025-06-10T09:05:00Z',
+    notes: 'Requires approval due to sensitive topic (AI in Healthcare).',
+  },
+  {
+    id: 'mod2',
+    eventId: 'user4', // Example of user moderation
+    eventType: 'user',
+    status: 'approved',
+    submittedBy: 'admin',
+    submittedAt: '2025-06-02T14:00:00Z',
+    notes: 'Profile updated and approved.',
+  },
+];

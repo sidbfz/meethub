@@ -143,3 +143,12 @@
     -webkit-line-clamp: 3;
   }
 }
+
+/* Disable scroll animations */
+* {
+  scroll-behavior: auto !important;
+}
+
+html {
+  scroll-behavior: auto !important;
+}

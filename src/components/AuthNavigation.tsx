@@ -4,7 +4,7 @@ import { useAuthStore } from '@/lib/stores/authStore';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Calendar, Plus } from 'lucide-react';
+import { Calendar, Plus, User } from 'lucide-react';
 
 export default function AuthNavigation() {
   const { user, signOut } = useAuthStore();
@@ -13,41 +13,34 @@ export default function AuthNavigation() {
   const handleSignOut = async () => {
     await signOut();
     router.push('/');
-  };
-
-  if (user) {
+  };  if (user) {
     // Authenticated user
     return (
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-0.5">
+        <Link href={`/profile/${user.id}`}>
+          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 hover:text-white text-xs px-1.5 py-0.5 h-6 min-h-0">
+            <User className="w-3 h-3 mr-0.5" />
+            Profile
+          </Button>
+        </Link>
         <Link href="/my-events">
-          <Button variant="outline" size="sm">
-            <Calendar className="w-4 h-4 mr-2" />
+          <Button variant="ghost" size="sm" className="text-white hover:bg-white/20 hover:text-white text-xs px-1.5 py-0.5 h-6 min-h-0">
+            <Calendar className="w-3 h-3 mr-0.5" />
             My Events
           </Button>
         </Link>
-        <Link href="/create-event">
-          <Button variant="outline" size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Create Event
-          </Button>
-        </Link>
-        <span className="text-sm text-gray-600">
-          Welcome, {user.user_metadata?.full_name || user.email}!
-        </span>
-        <Button variant="outline" onClick={handleSignOut}>
+        <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-white hover:bg-white/20 hover:text-white text-xs px-1.5 py-0.5 h-6 min-h-0">
           Sign Out
         </Button>
       </div>
     );
-  }
-
-  // Unauthenticated user
+  }  // Unauthenticated user
   return (
-    <div className="flex gap-2">
-      <Button variant="outline" onClick={() => router.push('/login')}>
+    <div className="flex gap-0.5">
+      <Button variant="ghost" onClick={() => router.push('/login')} className="text-white hover:bg-white/20 hover:text-white text-xs px-1.5 py-0.5 h-6 min-h-0">
         Sign In
       </Button>
-      <Button onClick={() => router.push('/signup')}>
+      <Button onClick={() => router.push('/signup')} className="bg-white/20 hover:bg-white/30 text-white backdrop-blur-sm border border-white/20 text-xs px-1.5 py-0.5 h-6 min-h-0">
         Sign Up
       </Button>
     </div>

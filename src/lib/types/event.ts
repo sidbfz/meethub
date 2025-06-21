@@ -1,14 +1,18 @@
+import { EventStatus } from './moderation';
+
 export interface Event {
   id: string;
   title: string;
   description: string;
   category: string;
-  location: string;
+  location?: string; // Keep for backward compatibility during transition
+  address?: string;
+  city?: string;
   date_time: string;
   max_participants: number;
   image_url?: string;
   host_id: string;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  status: EventStatus;
   created_at: string;
   updated_at: string;
   // Relations

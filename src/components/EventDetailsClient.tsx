@@ -10,7 +10,6 @@ import {
   MapPin, 
   Users, 
   Clock, 
-  User, 
   ArrowLeft, 
   Edit, 
   X,
@@ -19,7 +18,10 @@ import {
   AlertCircle,
   Map as MapIcon,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  Home,
+  Plus,
+  Building2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,6 +53,8 @@ export default function EventDetailsClient({ eventId, initialEvent }: EventDetai
   const router = useRouter();
   const queryClient = useQueryClient();
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isParticipantsModalOpen, setIsParticipantsModalOpen] = useState(false);
+  const [chatConnectionStatus, setChatConnectionStatus] = useState('connecting');
   
   // Queries
   const { data: event, isLoading: eventLoading, error: eventError } = useEventDetails(eventId, initialEvent || undefined);
@@ -80,14 +84,25 @@ export default function EventDetailsClient({ eventId, initialEvent }: EventDetai
   const joinEventMutation = useJoinEvent();
   const leaveEventMutation = useLeaveEvent();
   const cancelEventMutation = useCancelEvent();
-  const deleteEventMutation = useDeleteEvent();
-  // Calculate participant counts correctly
+  const deleteEventMutation = useDeleteEvent();  // Calculate participant counts correctly
   // Host is shown separately, participants are everyone else
-  const actualParticipants = participants.filter(p => p.user?.id !== event?.host_id);
+  const actualParticipants = participants.filter((p: any) => p.user?.id !== event?.host_id);
   const actualParticipantCount = actualParticipants.length;
   
   // Check if host is in participants list
-  const hostIsParticipant = participants.some(p => p.user?.id === event?.host_id);
+  const hostIsParticipant = participants.some((p: any) => p.user?.id === event?.host_id);
+    // Use direct event status
+  const isCancelled = event?.status === 'cancelled';  const statusText = event?.status === 'approved' ? 'Live' : 
+                    event?.status === 'concluded' ? 'Concluded' : 
+                    event?.status === 'cancelled' ? 'Cancelled' : 
+                    event?.status === 'pending_approval' ? 'Pending Approval' :
+                    event?.status === 'rejected' ? 'Rejected' :
+                    event?.status || 'Unknown';const statusColor = event?.status === 'approved' ? 'bg-green-100 text-green-800 border-green-300' :
+                     event?.status === 'concluded' ? 'bg-purple-100 text-purple-800 border-purple-300' :
+                     event?.status === 'cancelled' ? 'bg-red-100 text-red-800 border-red-300' :
+                     event?.status === 'pending_approval' ? 'bg-yellow-100 text-yellow-800 border-yellow-300' :
+                     event?.status === 'rejected' ? 'bg-red-200 text-red-900 border-red-400' :
+                     'bg-gray-100 text-gray-800 border-gray-300';
   
   // Total attendees = host + participants (if host not already counted in participants)
   // This logic remains sound: if host is in participants array, they are counted. 
@@ -139,10 +154,8 @@ export default function EventDetailsClient({ eventId, initialEvent }: EventDetai
       </div>
     );
   }
-
   const eventDate = new Date(event.date_time);
   const isHost = user?.id === event.host_id;
-  const isCancelled = event.status === 'cancelled';
   const isPastEvent = eventDate < new Date();
   
   // Helper function to safely format dates
@@ -201,20 +214,10 @@ export default function EventDetailsClient({ eventId, initialEvent }: EventDetai
     });
   };
 
-  const joinButtonLoading = joinEventMutation.isPending || leaveEventMutation.isPending;
-  return (
+  const joinButtonLoading = joinEventMutation.isPending || leaveEventMutation.isPending;  return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
         <div className="container mx-auto px-4 py-8">
-          {/* Back Button */}
-          <div className="mb-6">
-            <Link href="/">
-              <Button variant="ghost" className="hover:bg-white/50">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Events
-              </Button>
-            </Link>
-          </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content - Takes full width on mobile, 2/3 on desktop */}
@@ -239,9 +242,7 @@ export default function EventDetailsClient({ eventId, initialEvent }: EventDetai
                       </div>
                     )}
                   </div>
-                )}
-
-                <CardContent className="p-6">
+                )}                <CardContent className={`px-6 pb-0 md:pb-6 ${event.image_url ? 'pt-4' : 'pt-6'}`}>
                   {/* Status Alert */}
                   {isCancelled && (
                     <Alert className="mb-4 border-red-200 bg-red-50">
@@ -250,65 +251,55 @@ export default function EventDetailsClient({ eventId, initialEvent }: EventDetai
                         This event has been cancelled by the host.
                       </AlertDescription>
                     </Alert>
-                  )}
-
-                  {/* Category Badge */}
-                  <div className="mb-4">
+                  )}                  {/* Category and Status Badges */}
+                  <div className="mb-4 -mt-2 flex items-center gap-3">
                     <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                       {event.category}
+                    </Badge>
+                    <Badge 
+                      variant="outline"
+                      className={statusColor}
+                    >
+                      {statusText}
                     </Badge>
                   </div>
 
                   {/* Title */}
                   <h1 className="text-3xl font-bold text-gray-900 mb-4">
                     {event.title}
-                  </h1>
-
-                  {/* Event Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                  </h1>                  {/* Event Details */}                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8 mb-6 md:mb-8">
                     <div className="flex items-center gap-3 text-gray-600">
                       <Calendar className="w-5 h-5 text-blue-600" />
                       <div>
                         <p className="font-medium">{safeFormatDate(event.date_time, 'EEEE, MMMM dd, yyyy')}</p>
                         <p className="text-sm">{safeFormatDate(event.date_time, 'h:mm a')}</p>
                       </div>
+                    </div>                    <div className="flex items-center gap-3 text-gray-600">
+                      <MapPin className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <p className="font-medium">Address</p>
+                        <p className="text-sm">{event.address}</p>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-3 text-gray-600">
-                      <MapPin className="w-5 h-5 text-blue-600" />
+                      <Building2 className="w-5 h-5 text-blue-600" />
                       <div>
-                        <p className="font-medium">Location</p>
-                        <p className="text-sm">{event.location}</p>
-                      </div>
-                    </div>                    <div className="flex items-center gap-3 text-gray-600">
-                      <Users className="w-5 h-5 text-blue-600" />                      <div>
-                        <p className="font-medium">Participants</p>
-                        <p className="text-sm">{totalAttendees} / {event.max_participants}</p>
+                        <p className="font-medium">City</p>
+                        <p className="text-sm">{event.city}</p>
                       </div>
                     </div>
-
-                    {/* --- BEGIN MODIFICATION: Use displayHost for "Hosted by" --- */}
-                    {displayHost && (
-                      <div className="flex items-center gap-3 text-gray-600">
-                        <User className="w-5 h-5 text-blue-600" />
-                        <div>
-                          <p className="font-medium">Hosted by</p>
-                          <p className="text-sm">{hostFullName}</p>
-                        </div>
-                      </div>
-                    )}
-                    {/* --- END MODIFICATION --- */}
                   </div>
 
                   {/* Description */}
-                  <div className="mb-6">
+                  <div className="mb-6 -mt-4">
                     <h3 className="text-lg font-semibold mb-2">About this event</h3>
                     <p className="text-gray-600 whitespace-pre-wrap">{event.description}</p>
                   </div>
 
                   {/* Action Buttons */}
                   {!isCancelled && !isPastEvent && (
-                    <div className="flex flex-wrap gap-3">
+                    <div className="-mb-2 flex flex-wrap gap-3">
                       {user ? (                        <>                          {isHost ? (
                             <div className="flex gap-3">
                               <Button 
@@ -316,33 +307,31 @@ export default function EventDetailsClient({ eventId, initialEvent }: EventDetai
                                 className="flex-1"
                                 onClick={() => router.push(`/event/${eventId}/edit`)}
                               >
-                                <Edit className="w-4 h-4 mr-2" />
                                 Edit Event
-                              </Button>
-                              <Button 
+                              </Button>                              <Button 
                                 variant="destructive" 
                                 onClick={handleCancelEvent}
                                 disabled={cancelEventMutation.isPending}
+                                className="hover:bg-red-800"
                               >
                                 {cancelEventMutation.isPending ? (
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
-                                  <X className="w-4 h-4 mr-2" />
+                                  "Cancel Event"
                                 )}
-                                Cancel Event
                               </Button>
                               <Button 
                                 variant="destructive" 
                                 onClick={handleDeleteEvent}
                                 disabled={deleteEventMutation.isPending}
                                 title="Delete event permanently"
+                                className="hover:bg-red-900"
                               >
                                 {deleteEventMutation.isPending ? (
-                                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
-                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  "Delete"
                                 )}
-                                Delete
                               </Button>
                             </div>
                           ) : isParticipant ? (
@@ -391,9 +380,48 @@ export default function EventDetailsClient({ eventId, initialEvent }: EventDetai
                         This event has already taken place.
                       </AlertDescription>
                     </Alert>
-                  )}
-                </CardContent>
-              </Card>              {/* Map Placeholder */}
+                  )}                </CardContent>
+              </Card>              {/* Mobile Participants Section - Only visible on mobile */}
+              <div className="lg:hidden">
+                <Card className="-mt-4 -mb-4 bg-white/80 backdrop-blur-sm border-0 shadow-lg rounded-xl">
+                  <div
+                    className="flex items-center gap-4 w-full cursor-pointer px-6"
+                    onClick={() => setIsParticipantsModalOpen(true)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        setIsParticipantsModalOpen(true);
+                      }
+                    }}
+                  >
+                    {displayHost && (
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={hostAvatarUrl || undefined} />
+                        <AvatarFallback>
+                          {hostFullName?.charAt(0) || 'H'}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div className="flex-1 flex flex-col justify-center">
+                      <div className="flex items-center gap-2">
+                        <p className="text-lg font-medium text-gray-800">{hostFullName}</p>
+                        <Badge className="bg-blue-100 text-blue-800 text-sm px-2 py-1 font-medium shrink-0">
+                          Host
+                        </Badge>
+                      </div>
+                      <p className="text-base font-medium text-blue-600">
+                        See who's coming{' '}
+                        <span className="font-medium text-gray-500">
+                          ({totalAttendees}/{event.max_participants})
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Map Placeholder */}
               <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -416,219 +444,167 @@ export default function EventDetailsClient({ eventId, initialEvent }: EventDetai
                   </div>
                 </CardContent>
               </Card>
-            </div>
-
-            {/* Sidebar - Participants & Event Details (Hidden on mobile, fixed on desktop) */}
-            <div className="hidden lg:block lg:col-span-1 space-y-6">              {/* Participants Section */}              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg sticky top-8">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Users className="w-5 h-5" />
-                    Participants ({totalAttendees}/{event.max_participants})
-                  </CardTitle>
-                </CardHeader><CardContent>
-                  {participantsLoading ? (
-                    <div className="text-center py-4">
-                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
-                    </div>
-                  ) : (
-                    <div className="space-y-3 max-h-64 overflow-y-auto">
-                      {/* Host First */}
-                      {/* --- BEGIN MODIFICATION: Use displayHost for sidebar host display --- */}
-                      {displayHost && (
-                        <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={hostAvatarUrl || undefined} /> {/* Ensure src is string or undefined */
-                            }
-                            <AvatarFallback>
-                              {hostFullName?.charAt(0) || 'H'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0"> {/* Added flex-1 min-w-0 for truncation */}
-                            <p className="font-medium text-sm truncate">{hostFullName}</p>
-                            <p className="text-xs text-blue-600 font-medium">Host</p>
-                          </div>
-                        </div>
-                      )}
-                      {/* --- END MODIFICATION --- */}
-
-                      {/* Participants (excluding host) */}
-                      {actualParticipantCount === 0 && displayHost ? (
-                        <div className="text-center py-4 text-gray-500">
-                          <p className="text-sm">No other participants yet</p>
-                        </div>
-                      ) : actualParticipantCount === 0 && !displayHost ? (
-                        <div className="text-center py-4 text-gray-500">
-                            <p className="text-sm">No participants yet</p>
-                        </div>
-                      ) : (
-                        actualParticipants.map((participant) => {
-                          // Ensure participant.user exists before trying to access its properties
-                          if (!participant.user) return null; 
-                          return (
-                            <div key={participant.id} className="flex items-center gap-3 p-3 rounded-lg border">
+            </div>            {/* Sidebar - Participants & Event Details (Hidden on mobile, fixed on desktop) */}
+            <div className="hidden lg:block lg:col-span-1">
+              <div className="sticky top-8 space-y-6">
+                {/* Participants Section */}
+                <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="w-5 h-5" />
+                      Participants ({totalAttendees}/{event.max_participants})
+                    </CardTitle>
+                  </CardHeader>                  <CardContent>
+                    {participantsLoading ? (
+                      <div className="text-center py-4">
+                        <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
+                      </div>
+                    ) : (
+                      <div className="space-y-3 max-h-96 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                        {/* Host First */}
+                        {/* --- BEGIN MODIFICATION: Use displayHost for sidebar host display --- */}
+                        {displayHost && (
+                          <Link href={`/profile/${displayHost.id}`} className="block">
+                            <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-gray-200 transition-colors cursor-pointer">
                               <Avatar className="w-10 h-10">
-                                <AvatarImage src={participant.user.avatar_url || undefined} />
+                                <AvatarImage src={hostAvatarUrl || undefined} /> {/* Ensure src is string or undefined */
+                                }
                                 <AvatarFallback>
-                                  {participant.user.full_name?.charAt(0) || 'U'}
+                                  {hostFullName?.charAt(0) || 'H'}
                                 </AvatarFallback>
                               </Avatar>
-                              <div className="flex-1 min-w-0">
-                                <p className="font-medium text-sm truncate">{participant.user.full_name}</p>
-                                <p className="text-xs text-gray-500">
-                                  Joined {safeFormatDate(participant.joined_at, 'MMM dd')}
-                                </p>
+                              <div className="flex-1 min-w-0"> {/* Added flex-1 min-w-0 for truncation */}
+                                <p className="font-medium text-sm truncate">{hostFullName}</p>
+                                <p className="text-xs text-blue-600 font-medium">Host</p>
                               </div>
                             </div>
-                          );
-                        })
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                          </Link>
+                        )}
+                        {/* --- END MODIFICATION --- */}
 
-              {/* Event Info */}
-              <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg sticky top-80">
-                <CardHeader>
-                  <CardTitle>Event Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Status</p>
-                    <Badge 
-                      variant={isCancelled ? "destructive" : "default"}
-                      className="mt-1"
-                    >
-                      {isCancelled ? 'Cancelled' : event.status === 'approved' ? 'Active' : event.status}
-                    </Badge>
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Created</p>
-                    <p className="text-sm text-gray-800 mt-1">
-                      {safeFormatDate(event.created_at, 'MMM dd, yyyy')}
-                    </p>
-                  </div>
-                  
-                  {event.updated_at && event.updated_at !== event.created_at && (
-                    <>
-                      <Separator />
-                      <div>
-                        <p className="text-sm font-medium text-gray-600">Last Updated</p>
-                        <p className="text-sm text-gray-800 mt-1">
-                          {safeFormatDate(event.updated_at, 'MMM dd, yyyy')}
-                        </p>
+                        {/* Participants (excluding host) */}
+                        {actualParticipantCount === 0 && displayHost ? (
+                          <div className="text-center py-4 text-gray-500">
+                            <p className="text-sm">No other participants yet</p>
+                          </div>
+                        ) : actualParticipantCount === 0 && !displayHost ? (
+                          <div className="text-center py-4 text-gray-500">
+                              <p className="text-sm">No participants yet</p>
+                          </div>
+                        ) : (
+                          actualParticipants.map((participant) => {
+                            // Ensure participant.user exists before trying to access its properties
+                            if (!participant.user) return null; 
+                            return (
+                              <Link key={participant.id} href={`/profile/${participant.user.id}`} className="block">
+                                <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-gray-200 transition-colors cursor-pointer">
+                                  <Avatar className="w-10 h-10">
+                                    <AvatarImage src={participant.user.avatar_url || undefined} />
+                                    <AvatarFallback>
+                                      {participant.user.full_name?.charAt(0) || 'U'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-medium text-sm truncate">{participant.user.full_name}</p>
+                                    <p className="text-xs text-gray-500">
+                                      Joined {safeFormatDate(participant.joined_at, 'MMM dd')}
+                                    </p>
+                                  </div>
+                                </div>
+                              </Link>
+                            );
+                          })
+                        )}
                       </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                    )}                  </CardContent>
+                </Card>
+              </div>            </div>
           </div>
+        </div>
+      </div>
 
-          {/* Mobile Participants Section - Only visible on mobile */}
-          <div className="lg:hidden mt-8 space-y-6">            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Participants ({totalAttendees}/{event.max_participants})
-                </CardTitle>
-              </CardHeader><CardContent>
-                {participantsLoading ? (
-                  <div className="text-center py-4">
-                    <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Host First */}
-                    {event.host && (
-                      <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg col-span-2">
+      {/* Participants Modal - Mobile */}
+      {isParticipantsModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-md max-h-[80vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Users className="w-5 h-5" />
+                Participants ({totalAttendees}/{event.max_participants})
+              </h2>
+              <Button
+                onClick={() => setIsParticipantsModalOpen(false)}
+                variant="ghost"
+                size="icon"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4">
+              {participantsLoading ? (
+                <div className="text-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-blue-600" />
+                  <p className="text-gray-500 mt-2">Loading participants...</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Host First */}
+                  {displayHost && (
+                    <Link href={`/profile/${displayHost.id}`} className="block">
+                      <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg hover:bg-gray-200 transition-colors">
                         <Avatar className="w-10 h-10">
-                          <AvatarImage src={event.host.avatar_url} />
+                          <AvatarImage src={hostAvatarUrl || undefined} />
                           <AvatarFallback>
-                            {event.host.full_name?.charAt(0) || 'H'}
+                            {hostFullName?.charAt(0) || 'H'}
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{event.host.full_name}</p>
+                          <p className="font-medium text-sm truncate">{hostFullName}</p>
                           <p className="text-xs text-blue-600 font-medium">Host</p>
                         </div>
                       </div>
-                    )}
+                    </Link>
+                  )}
 
-                    {/* Participants (excluding host) */}
-                    {actualParticipantCount === 0 ? (
-                      <div className="text-center py-4 text-gray-500 col-span-2">
-                        <p className="text-sm">No other participants yet</p>
-                      </div>
-                    ) : (
-                      actualParticipants.map((participant) => {
-                        return (
-                          <div key={participant.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                  {/* Participants (excluding host) */}
+                  {actualParticipantCount === 0 && displayHost ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-sm">No other participants yet</p>
+                    </div>
+                  ) : actualParticipantCount === 0 && !displayHost ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <p className="text-sm">No participants yet</p>
+                    </div>
+                  ) : (
+                    actualParticipants.map((participant) => {
+                      if (!participant.user) return null;
+                      return (
+                        <Link key={participant.id} href={`/profile/${participant.user.id}`} className="block">
+                          <div className="flex items-center gap-3 p-3 rounded-lg border hover:bg-gray-50 transition-colors">
                             <Avatar className="w-10 h-10">
-                              <AvatarImage src={participant.user?.avatar_url} />
+                              <AvatarImage src={participant.user.avatar_url || undefined} />
                               <AvatarFallback>
-                                {participant.user?.full_name?.charAt(0) || 'U'}
+                                {participant.user.full_name?.charAt(0) || 'U'}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate">{participant.user?.full_name}</p>
+                              <p className="font-medium text-sm truncate">{participant.user.full_name}</p>
                               <p className="text-xs text-gray-500">
                                 Joined {safeFormatDate(participant.joined_at, 'MMM dd')}
                               </p>
                             </div>
                           </div>
-                        );
-                      })
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Event Info Mobile */}
-            <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle>Event Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Status</p>
-                  <Badge 
-                    variant={isCancelled ? "destructive" : "default"}
-                    className="mt-1"
-                  >
-                    {isCancelled ? 'Cancelled' : event.status === 'approved' ? 'Active' : event.status}
-                  </Badge>
+                        </Link>
+                      );
+                    })
+                  )}
                 </div>
-                
-                <Separator />
-                
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Created</p>
-                  <p className="text-sm text-gray-800 mt-1">
-                    {safeFormatDate(event.created_at, 'MMM dd, yyyy')}
-                  </p>
-                </div>
-                
-                {event.updated_at && event.updated_at !== event.created_at && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Last Updated</p>
-                      <p className="text-sm text-gray-800 mt-1">
-                        {safeFormatDate(event.updated_at, 'MMM dd, yyyy')}
-                      </p>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Floating Chat Button - Always visible when user can chat */}
       {(isParticipant || isHost) && (        <>          <Button
@@ -638,18 +614,17 @@ export default function EventDetailsClient({ eventId, initialEvent }: EventDetai
           >
             <MessageCircle className="w-6 h-6" />          </Button>          {/* Chat Modal */}
           {isChatOpen && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 md:p-0">
-              {/* Mobile: Full screen, Desktop: Right side */}
-              <div className="bg-background rounded-lg w-full h-full md:w-[80vh] md:h-[95vh] md:fixed md:right-4 md:top-1/2 md:-translate-y-1/2 relative flex flex-col">
-                <Button
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              {/* Mobile: Modal, Desktop: Right side */}
+              <div className="bg-background w-full rounded-lg max-h-[90vh] md:w-[80vh] md:h-[95vh] md:max-h-none md:fixed md:right-4 md:top-1/2 md:-translate-y-1/2 relative flex flex-col">                <Button
                   onClick={() => setIsChatOpen(false)}
-                  className="absolute top-4 right-4 z-10"
+                  className="absolute top-1 md:top-2 right-2 z-10"
                   variant="ghost"
                   size="icon"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-5 w-5" />
                 </Button>
-                <div className="flex-1 pt-12 md:pt-0">
+                <div className="flex-1 pt-0">
                   <EventChatSimple eventId={eventId} />
                 </div>
               </div>

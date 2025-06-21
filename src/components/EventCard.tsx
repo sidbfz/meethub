@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { format } from 'date-fns';
-import { Calendar, MapPin, Users, Clock, User } from 'lucide-react';
+import { Calendar, MapPin, Users, Clock, User, Building2 } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Event } from '@/lib/types/event';
@@ -21,10 +21,11 @@ export default function EventCard({ event }: EventCardProps) {
   const leaveEventMutation = useLeaveEvent();
   const { data: isParticipant = false, isLoading: participationLoading } = useIsParticipant(event.id);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [imageError, setImageError] = useState(false);
-  const eventDate = new Date(event.date_time);
+  const [imageError, setImageError] = useState(false);  const eventDate = new Date(event.date_time);
   const isPastEvent = eventDate < new Date();
-  const isCancelled = event.status === 'cancelled';
+  const status = event.status || 'pending';
+  const isCancelled = status === 'cancelled';
+  const isConcluded = status === 'concluded';
   const isHost = user?.id === event.host_id;
   
   // Helper function to safely format dates
@@ -62,9 +63,8 @@ export default function EventCard({ event }: EventCardProps) {
 
   const isLoading = joinEventMutation.isPending || leaveEventMutation.isPending || participationLoading;
   return (
-    <Link href={`/event/${event.id}`}>
-      <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden cursor-pointer">
-        <div className="relative aspect-video overflow-hidden">
+    <Link href={`/event/${event.id}`}>      <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 overflow-hidden cursor-pointer p-0">
+        <div className="relative h-48 overflow-hidden">
           {event.image_url && !imageError ? (
             <>
               {!imageLoaded && (
@@ -85,14 +85,12 @@ export default function EventCard({ event }: EventCardProps) {
             <div className="w-full h-full bg-gradient-to-br from-blue-100 to-purple-100 flex items-center justify-center">
               <Calendar className="w-16 h-16 text-gray-400" />
             </div>
-          )}
-
-          {/* Status Overlay */}
-          {(isCancelled || isPastEvent) && (
+          )}          {/* Status Overlay */}
+          {(isCancelled || isConcluded) && (
             <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
               <div className="text-center text-white">
                 <p className="text-lg font-bold">
-                  {isCancelled ? 'Cancelled' : 'Past Event'}
+                  {isCancelled ? 'Cancelled' : 'Concluded'}
                 </p>
               </div>
             </div>
@@ -111,32 +109,22 @@ export default function EventCard({ event }: EventCardProps) {
             <div className="text-lg font-bold text-gray-900 leading-none">
               {safeFormatDate(event.date_time, 'dd', '--')}
             </div>
-          </div>
-        </div>
+          </div>        </div>
 
-      <CardContent className="p-4">
-        <h3 className="font-semibold text-lg mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+      <CardContent className="px-3 pb-1 -mt-5"><h3 className="font-semibold text-lg mb-0.5 line-clamp-2 group-hover:text-blue-600 transition-colors">
           {event.title}
-        </h3>
-        
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-          {event.description}
-        </p>
-
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Clock className="w-4 h-4 flex-shrink-0" />
-            <span>{formattedDate} at {formattedTime}</span>
+        </h3>        <div className="space-y-1">          <div className="flex items-center gap-4 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 flex-shrink-0" />
+              <span>{formattedDate} at {formattedTime}</span>
+            </div><div className="flex items-center gap-2">
+              <Users className="w-4 h-4 flex-shrink-0" />
+              <span>{event.participants_count || event.participants?.filter(p => p.status === 'joined').length || 0}/{event.max_participants}</span>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <MapPin className="w-4 h-4 flex-shrink-0" />
-            <span className="truncate">{event.location}</span>
-          </div>
-          
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <Users className="w-4 h-4 flex-shrink-0" />
-            <span>Max {event.max_participants} participants</span>
+            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <Building2 className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">{event.city || event.location || 'City TBD'}</span>
           </div>
 
           {event.host && (
@@ -144,9 +132,10 @@ export default function EventCard({ event }: EventCardProps) {
               <User className="w-4 h-4 flex-shrink-0" />
               <span className="truncate">Hosted by {event.host.full_name}</span>
             </div>
-          )}
-        </div>
-      </CardContent>        <CardFooter className="p-4 pt-0">
+          )}        </div>
+      </CardContent>
+
+        <CardFooter className="px-3 pb-3 -mt-3">
           {user && !isCancelled && !isPastEvent ? (
             isParticipant && !isHost ? (
               <Button
@@ -199,7 +188,7 @@ export default function EventCard({ event }: EventCardProps) {
                 }
               }}
               className="w-full"
-              variant="outline"
+              variant="default"
               disabled={isCancelled || isPastEvent}
             >
               {isCancelled ? 'Cancelled' : isPastEvent ? 'Past Event' : 'Login to Join'}

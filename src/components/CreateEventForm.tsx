@@ -7,7 +7,6 @@ import * as z from "zod";
 import { useDropzone } from "react-dropzone";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { format } from "date-fns";
 import { supabase } from "@/lib/supabase/client";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { eventsService } from "@/lib/services/eventsService";
@@ -15,11 +14,13 @@ import { useUpdateEvent } from "@/lib/hooks/useEvents";
 import { Event } from "@/lib/types/event";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Upload, X, AlertCircle, Calendar, MapPin, Users, Image as ImageIcon } from "lucide-react";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { DateTimePicker } from "@/components/ui/date-picker";
+import { Loader2, Upload, X, Calendar, MapPin, Users, Image as ImageIcon, Building2 } from "lucide-react";
+import { format } from "date-fns";
 
 // Zod schema for event validation
 const eventSchema = z.object({
@@ -36,10 +37,14 @@ const eventSchema = z.object({
   category: z
     .string()
     .min(1, "Please select a category"),
-  location: z
+  address: z
     .string()
-    .min(1, "Location is required")
-    .min(3, "Location must be at least 3 characters"),
+    .min(1, "Address is required")
+    .min(3, "Address must be at least 3 characters"),
+  city: z
+    .string()
+    .min(1, "City is required")
+    .min(2, "City must be at least 2 characters"),
   date_time: z
     .string()
     .min(1, "Date and time is required")
@@ -95,32 +100,31 @@ export default function CreateEventForm({ eventId, initialData }: CreateEventFor
   // Use the update event mutation for edit mode
   const updateEventMutation = useUpdateEvent();
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    watch,
-    reset,
-    formState: { errors },
-  } = useForm<EventFormData>({
+  const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      category: "",
+      address: "",
+      city: "",
+      date_time: "",
+      max_participants: 1,
+      image_url: "",
+    },
   });
-
   // Initialize form with existing data in edit mode
   useEffect(() => {
     if (isEditMode && initialData) {
-      // Format the date_time for the datetime-local input
-      const formattedDateTime = initialData.date_time 
-        ? format(new Date(initialData.date_time), "yyyy-MM-dd'T'HH:mm")
-        : "";
-      
-      // Reset form with initial data
-      reset({
+      // The DateTimePicker component now handles its own formatting.
+      // We pass the raw ISO string directly to the form.
+      form.reset({
         title: initialData.title,
         description: initialData.description,
         category: initialData.category,
-        location: initialData.location,
-        date_time: formattedDateTime,
+        address: (initialData as any).location || (initialData as any).address || "", // Support both old and new field names during transition
+        city: (initialData as any).city || "",
+        date_time: initialData.date_time || "",
         max_participants: initialData.max_participants,
         image_url: initialData.image_url || "",
       });
@@ -130,18 +134,19 @@ export default function CreateEventForm({ eventId, initialData }: CreateEventFor
         setImagePreview(initialData.image_url);
       }
     }
-  }, [isEditMode, initialData, reset]);
+  }, [isEditMode, initialData, form]);
+  
   // Ensure category is set properly in edit mode
   useEffect(() => {
     if (isEditMode && initialData?.category) {
       // Force set the category value with a slight delay to ensure form is ready
       const timer = setTimeout(() => {
-        setValue("category", initialData.category);
+        form.setValue("category", initialData.category);
       }, 100);
       
       return () => clearTimeout(timer);
     }
-  }, [isEditMode, initialData?.category, setValue]);
+  }, [isEditMode, initialData?.category, form]);
 
   // Upload image to Supabase Storage
   const uploadImageToSupabase = async (file: File): Promise<string | null> => {
@@ -229,14 +234,13 @@ export default function CreateEventForm({ eventId, initialData }: CreateEventFor
     if (!authLoading && !user) {
       router.push("/login");
     }
-  }, [user, authLoading, router]);
-  const removeImage = () => {
+  }, [user, authLoading, router]);  const removeImage = () => {
     setUploadedImage(null);
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
       setImagePreview(null);
     }
-    setValue('image_url', '');
+    form.setValue('image_url', '');
   };
 
   // Helper function to extract the file path from Supabase Storage URL
@@ -348,13 +352,12 @@ export default function CreateEventForm({ eventId, initialData }: CreateEventFor
           toast.error('Authentication session expired. Please log in again.');
           router.push('/login');
           return;
-        }
-
-        const updates = {
+        }        const updates = {
           title: data.title,
           description: data.description,
           category: data.category,
-          location: data.location,
+          address: data.address,
+          city: data.city,
           date_time: data.date_time,
           max_participants: data.max_participants,
           image_url: imageUrl,
@@ -428,7 +431,8 @@ export default function CreateEventForm({ eventId, initialData }: CreateEventFor
               title: data.title,
               description: data.description,
               category: data.category,
-              location: data.location,
+              address: data.address,
+              city: data.city,
               date_time: data.date_time,
               max_participants: data.max_participants,
               image_url: imageUrl,
@@ -437,7 +441,7 @@ export default function CreateEventForm({ eventId, initialData }: CreateEventFor
             }
           ])
           .select()
-          .single();        if (error) {
+          .single();if (error) {
           console.error('Database error:', error);
           console.error('Error details:', {
             message: error.message,
@@ -468,12 +472,12 @@ export default function CreateEventForm({ eventId, initialData }: CreateEventFor
           console.log('Host added as participant successfully');        } catch (participantError: unknown) {
           console.error('Error adding host as participant:', participantError);
           // Don't fail the entire operation, just log the error
-        }// Success message
+        }        // Success message
         const formattedDate = format(new Date(data.date_time), "PPP 'at' p");
         toast.success(`Event "${data.title}" created successfully for ${formattedDate}! It's now pending approval.`);
         
         // Reset form and clean up
-        reset();
+        form.reset();
         removeImage();
         
         // Redirect to home
@@ -515,216 +519,271 @@ export default function CreateEventForm({ eventId, initialData }: CreateEventFor
             : 'Provide information about your event'
           }
         </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Event Title *</Label>            <Input
-              id="title"
-              placeholder="Enter event title"
-              {...register("title")}
-              disabled={isLoading || isUploading || isDeletingOldImage}
-              className={errors.title ? "border-red-500" : ""}
+      </CardHeader>      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Title */}
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Event Title *</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter event title"
+                      {...field}
+                      disabled={isLoading || isUploading || isDeletingOldImage}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.title && (
-              <p className="text-sm text-red-500 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
-                {errors.title.message}
-              </p>
-            )}
-          </div>
 
-          {/* Description */}
-          <div className="space-y-2">
-            <Label htmlFor="description">Description *</Label>            <Textarea
-              id="description"
-              placeholder="Describe your event..."
-              rows={4}
-              {...register("description")}
-              disabled={isLoading || isUploading || isDeletingOldImage}
-              className={errors.description ? "border-red-500" : ""}
+            {/* Description */}
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Description *</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Describe your event..."
+                      rows={4}
+                      {...field}
+                      disabled={isLoading || isUploading || isDeletingOldImage}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-            {errors.description && (
-              <p className="text-sm text-red-500 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
-                {errors.description.message}
-              </p>
-            )}
-          </div>          {/* Category */}
-          <div className="space-y-2">
-            <Label htmlFor="category">Category *</Label>            <Select 
-              onValueChange={(value: string) => setValue("category", value)} 
+
+            {/* Category */}
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category *</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={isLoading || isUploading || isDeletingOldImage}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Address */}
+            <FormField
+              control={form.control}
+              name="address"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" />
+                    Address *
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter event address"
+                      {...field}
+                      disabled={isLoading || isUploading || isDeletingOldImage}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* City */}
+            <FormField
+              control={form.control}
+              name="city"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <Building2 className="h-4 w-4" />
+                    City *
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter city"
+                      {...field}
+                      disabled={isLoading || isUploading || isDeletingOldImage}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />            {/* Date & Time */}
+            <FormField
+              control={form.control}
+              name="date_time"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    Date & Time *
+                  </FormLabel>
+                  <FormControl>
+                    <DateTimePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      disabled={isLoading || isUploading || isDeletingOldImage}
+                      placeholder="Select event date and time"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Choose when your event will take place. Must be in the future.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Max Participants */}
+            <FormField
+              control={form.control}
+              name="max_participants"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    Max Participants *
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="1000"
+                      placeholder="Enter maximum number of participants"
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 1)}
+                      disabled={isLoading || isUploading || isDeletingOldImage}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Image Upload */}
+            <FormField
+              control={form.control}
+              name="image_url"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <ImageIcon className="h-4 w-4" />
+                    Event Image (Optional)
+                  </FormLabel>
+                  <FormControl>
+                    <div className="space-y-2">
+                      {!imagePreview ? (
+                        <div
+                          {...getRootProps()}
+                          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
+                            isDragActive
+                              ? "border-blue-400 bg-blue-50"
+                              : "border-gray-300 hover:border-gray-400"
+                          } ${isUploading || isDeletingOldImage ? "opacity-50 pointer-events-none" : ""}`}
+                        >
+                          <input {...getInputProps()} disabled={isUploading || isDeletingOldImage} />
+                          {isUploading || isDeletingOldImage ? (
+                            <Loader2 className="mx-auto h-8 w-8 text-blue-600 mb-2 animate-spin" />
+                          ) : (
+                            <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                          )}
+                          <p className="text-sm text-gray-600">
+                            {isDeletingOldImage
+                              ? "Deleting old image..."
+                              : isUploading
+                              ? "Uploading image..."
+                              : isDragActive
+                              ? "Drop the image here..."
+                              : "Drag & drop an image here, or click to select"}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            JPG, JPEG, PNG up to 5MB
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="relative">
+                          <img
+                            src={imagePreview}
+                            alt="Event preview"
+                            className="w-full h-48 object-cover rounded-lg"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-2 right-2"
+                            onClick={removeImage}
+                            disabled={isUploading || isDeletingOldImage}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                          <div
+                            {...getRootProps()}
+                            className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer"
+                          >
+                            <input {...getInputProps()} disabled={isUploading || isDeletingOldImage} />
+                            <p className="text-white text-sm font-medium">Drop new image to replace</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    Upload an image to make your event more attractive to participants.
+                  </FormDescription>
+                </FormItem>
+              )}
+            />
+
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full"
               disabled={isLoading || isUploading || isDeletingOldImage}
-              value={watch("category") || ""}
-              key={watch("category")} // Force re-render when value changes
+              size="lg"
             >
-              <SelectTrigger className={errors.category ? "border-red-500" : ""}>
-                <SelectValue placeholder="Select a category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.category && (
-              <p className="text-sm text-red-500 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
-                {errors.category.message}
-              </p>
-            )}
-          </div>
-
-          {/* Location */}
-          <div className="space-y-2">
-            <Label htmlFor="location" className="flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
-              Location *
-            </Label>            <Input
-              id="location"
-              placeholder="Enter event location"
-              {...register("location")}
-              disabled={isLoading || isUploading || isDeletingOldImage}
-              className={errors.location ? "border-red-500" : ""}
-            />
-            {errors.location && (
-              <p className="text-sm text-red-500 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
-                {errors.location.message}
-              </p>
-            )}
-          </div>
-
-          {/* Date & Time */}
-          <div className="space-y-2">
-            <Label htmlFor="date_time">Date & Time *</Label>            <Input
-              id="date_time"
-              type="datetime-local"
-              {...register("date_time")}
-              disabled={isLoading || isUploading || isDeletingOldImage}
-              className={errors.date_time ? "border-red-500" : ""}
-            />
-            {errors.date_time && (
-              <p className="text-sm text-red-500 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
-                {errors.date_time.message}
-              </p>
-            )}
-          </div>
-
-          {/* Max Participants */}
-          <div className="space-y-2">
-            <Label htmlFor="max_participants" className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              Max Participants *
-            </Label>            <Input
-              id="max_participants"
-              type="number"
-              min="1"
-              max="1000"
-              placeholder="Enter maximum number of participants"
-              {...register("max_participants", { valueAsNumber: true })}
-              disabled={isLoading || isUploading || isDeletingOldImage}
-              className={errors.max_participants ? "border-red-500" : ""}
-            />
-            {errors.max_participants && (
-              <p className="text-sm text-red-500 flex items-center gap-1">
-                <AlertCircle className="h-4 w-4" />
-                {errors.max_participants.message}
-              </p>
-            )}
-          </div>
-
-          {/* Image Upload with react-dropzone */}
-          <div className="space-y-2">
-            <Label className="flex items-center gap-1">
-              <ImageIcon className="h-4 w-4" />
-              Event Image (Optional)
-            </Label>
-            
-            {!imagePreview ? (
-              <div
-                {...getRootProps()}                className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-                  isDragActive
-                    ? "border-blue-400 bg-blue-50"
-                    : "border-gray-300 hover:border-gray-400"
-                } ${isUploading || isDeletingOldImage ? "opacity-50 pointer-events-none" : ""}`}
-              >
-                <input {...getInputProps()} disabled={isUploading || isDeletingOldImage} />
-                {isUploading || isDeletingOldImage ? (
-                  <Loader2 className="mx-auto h-8 w-8 text-blue-600 mb-2 animate-spin" />
-                ) : (
-                  <Upload className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                )}
-                <p className="text-sm text-gray-600">
-                  {isDeletingOldImage
-                    ? "Deleting old image..."
-                    : isUploading
-                    ? "Uploading image..."
-                    : isDragActive
-                    ? "Drop the image here..."
-                    : "Drag & drop an image here, or click to select"}
-                </p>
-                <p className="text-xs text-gray-500 mt-1">
-                  JPG, JPEG, PNG up to 5MB
-                </p>
-              </div>
-            ) : (
-              <div className="relative">
-                <img
-                  src={imagePreview}
-                  alt="Event preview"
-                  className="w-full h-48 object-cover rounded-lg"
-                />                <Button
-                  type="button"
-                  variant="destructive"
-                  size="sm"
-                  className="absolute top-2 right-2"
-                  onClick={removeImage}
-                  disabled={isUploading || isDeletingOldImage}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-                {/* Allow re-upload by dropping new image */}
-                <div
-                  {...getRootProps()}
-                  className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 hover:opacity-100 cursor-pointer"
-                >
-                  <input {...getInputProps()} disabled={isUploading || isDeletingOldImage} />
-                  <p className="text-white text-sm font-medium">Drop new image to replace</p>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            className="w-full"            disabled={isLoading || isUploading || isDeletingOldImage}
-            size="lg"
-          >            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {isEditMode ? 'Updating Event...' : 'Creating Event...'}
-              </>
-            ) : isDeletingOldImage ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Deleting Old Image...
-              </>
-            ) : isUploading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading Image...
-              </>
-            ) : (
-              isEditMode ? 'Update Event' : 'Create Event'
-            )}
-          </Button>
-        </form>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  {isEditMode ? 'Updating Event...' : 'Creating Event...'}
+                </>
+              ) : isDeletingOldImage ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting Old Image...
+                </>
+              ) : isUploading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading Image...
+                </>
+              ) : (
+                isEditMode ? 'Update Event' : 'Create Event'
+              )}
+            </Button>
+          </form>
+        </Form>
       </CardContent>
     </Card>
   );

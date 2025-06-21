@@ -582,15 +582,14 @@ export default function EventChatSimple({ eventId }: EventChatSimpleProps) {
       </div>
     );
   }  return (
-    <div className="h-[95vh] w-full flex flex-col border rounded-xl shadow-lg bg-white dark:bg-gray-900 overflow-hidden">
-      {/* Header */}
-      <div className="py-3 px-6 border-b bg-blue-50 dark:bg-blue-900/20 flex-shrink-0">
+    <div className="h-[85vh] md:h-[95vh] w-full flex flex-col border rounded-xl shadow-lg bg-white dark:bg-gray-900 overflow-hidden">      {/* Header */}
+      <div className="py-2 md:py-3 px-4 md:px-6 pr-12 md:pr-16 border-b bg-blue-50 dark:bg-blue-900/20 flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="text-lg font-semibold flex items-center gap-2 text-gray-900 dark:text-gray-100">
             <MessageCircle className="h-5 w-5 text-blue-600" />
             Event Chat
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mr-2">
             <div className={`w-2 h-2 rounded-full ${
               connectionStatus === 'SUBSCRIBED' ? 'bg-green-500' : 
               connectionStatus === 'CHANNEL_ERROR' ? 'bg-red-500' : 
@@ -613,10 +612,9 @@ export default function EventChatSimple({ eventId }: EventChatSimpleProps) {
             )}
           </div>
         </div>
-      </div>      
-      {/* Messages Area - Fixed height with scroll */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
-        <div className="px-4 py-4 space-y-3">
+      </div>{/* Messages Area - Fixed height with scroll */}
+      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 min-h-0">
+        <div className="px-3 md:px-4 py-3 md:py-4 space-y-3">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <div className="bg-white dark:bg-gray-800 rounded-full p-4 shadow-md mb-4">
@@ -690,17 +688,16 @@ export default function EventChatSimple({ eventId }: EventChatSimpleProps) {
           )}
           <div ref={messagesEndRef} />
         </div>
-      </div>      
-      {/* Input Area - Fixed at bottom */}
-      <div className="border-t bg-white dark:bg-gray-900 p-4 flex-shrink-0">
-        <div className="flex gap-3 items-end">
+      </div>        {/* Input Area - Fixed at bottom */}
+      <div className="border-t bg-white dark:bg-gray-900 p-3 md:p-4 flex-shrink-0">
+        <div className="flex gap-2 md:gap-3 items-end">
           <div className="flex-1">            <Input
               ref={inputRef}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type your message..."
-              className="w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl px-4 py-3 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 resize-none"
+              className="w-full bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 rounded-xl px-3 md:px-4 py-2 md:py-3 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 resize-none text-sm md:text-base"
               maxLength={1000}
               disabled={sending}
             />
@@ -709,7 +706,7 @@ export default function EventChatSimple({ eventId }: EventChatSimpleProps) {
             onClick={handleSendMessage}
             disabled={!newMessage.trim() || sending}
             size="icon"
-            className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white h-12 w-12 flex-shrink-0 shadow-md transition-all duration-200"
+            className="rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed text-white h-10 w-10 md:h-12 md:w-12 flex-shrink-0 shadow-md transition-all duration-200"
           >
             {sending ? (
               <Loader2 className="h-5 w-5 animate-spin" />

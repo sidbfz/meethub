@@ -2,18 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useInView } from "react-intersection-observer";
-import AuthNavigation from "@/components/AuthNavigation";
+import { useRouter } from "next/navigation";
 import EventCard from "@/components/EventCard";
 import EventFilters from "@/components/EventFilters";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useEvents } from "@/lib/hooks/useEvents";
 import { EventFilters as EventFiltersType } from "@/lib/types/event";
 import { Button } from "@/components/ui/button";
-import { Plus, Loader2, Grid, Map } from "lucide-react";
+import { Plus, Loader2, Grid, Map, User, Users, Calendar, Home as HomeIcon } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
   const { user } = useAuthStore();
+  const router = useRouter();
   const [filters, setFilters] = useState<EventFiltersType>({});
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   
@@ -39,6 +40,19 @@ export default function Home() {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+  // Listen for view mode changes from global header
+  useEffect(() => {
+    const handleViewModeChange = (event: CustomEvent) => {
+      setViewMode(event.detail);
+    };
+
+    window.addEventListener('viewModeChange', handleViewModeChange as EventListener);
+    
+    return () => {
+      window.removeEventListener('viewModeChange', handleViewModeChange as EventListener);
+    };
+  }, []);
+
   // Get all events from all pages
   const allEvents = data?.pages.flatMap(page => page.events) || [];
   const totalResults = allEvents.length;
@@ -59,57 +73,8 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-              Discover Events
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Find and join amazing events in your community
-            </p>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            {/* View Mode Toggle */}
-            <div className="flex rounded-lg bg-white/50 dark:bg-gray-800/50 p-1">
-              <Button
-                variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-                className="rounded-md"
-              >
-                <Grid className="w-4 h-4 mr-1" />
-                Grid
-              </Button>
-              <Button
-                variant={viewMode === 'map' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('map')}
-                className="rounded-md"
-              >
-                <Map className="w-4 h-4 mr-1" />
-                Map
-              </Button>
-            </div>
-
-            {/* Auth Navigation */}
-            <AuthNavigation />
-            
-            {/* Create Event Button */}
-            {user && (
-              <Link href="/create-event">
-                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
-                  <Plus className="mr-2 h-4 w-4" />
-                  Create Event
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800" style={{ scrollBehavior: 'auto' }}>
+      <div className="container mx-auto px-4 pt-4 pb-8">
         {/* Filters */}
         <div className="mb-8">
           <EventFilters
@@ -196,10 +161,15 @@ export default function Home() {
             <p className="text-gray-600 dark:text-gray-400 mb-4">
               Interactive map view with event locations will be available soon.
             </p>
-            <Button onClick={() => setViewMode('grid')} variant="outline">
-              <Grid className="w-4 h-4 mr-2" />
-              Switch to Grid View
-            </Button>
+            <Button onClick={() => {
+              setViewMode('grid');
+              window.dispatchEvent(new CustomEvent('viewModeChange', { detail: 'grid' }));
+            }} 
+            variant="outline"
+          >
+            <Grid className="w-4 h-4 mr-2" />
+            Switch to Grid View
+          </Button>
           </div>
         )}
       </div>
