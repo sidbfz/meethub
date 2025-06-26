@@ -8,7 +8,7 @@ interface EventPageProps {
 
 // This will be a server component that fetches initial data
 export default async function EventPage({ params }: EventPageProps) {
-  const { id } = await params;
+  const { id } = params;
 
   try {
     // Create server-side supabase client with auth context
