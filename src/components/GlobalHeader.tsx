@@ -3,14 +3,19 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Plus, Grid, Map, User, Users, Calendar, Home as HomeIcon, ArrowLeft, Menu, X } from 'lucide-react';
+import { Plus, Grid, Map, User, Users, Calendar, Home as HomeIcon, ArrowLeft, Menu, X, Shield } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/stores/authStore';
 
 export default function GlobalHeader() {
   const { user } = useAuthStore();
   const pathname = usePathname();
-  const router = useRouter();  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const router = useRouter();
+  
+  // Check if user is moderator
+  const isModerator = user?.role === 'moderator';
+
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -54,9 +59,7 @@ export default function GlobalHeader() {
   // Close menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
-  }, [pathname]);
-
-  // Don't show header on login, signup, auth callback pages
+  }, [pathname]);  // Don't show header on login, signup, auth callback pages
   if (pathname?.includes('/login') || pathname?.includes('/signup') || pathname?.includes('/auth/callback')) {
     return null;
   }
@@ -69,13 +72,7 @@ export default function GlobalHeader() {
     setViewMode(mode);
     // Dispatch custom event for home page to listen to
     window.dispatchEvent(new CustomEvent('viewModeChange', { detail: mode }));
-  };
-
-  // Don't show header on login, signup, auth callback pages
-  if (pathname?.includes('/login') || pathname?.includes('/signup') || pathname?.includes('/auth/callback')) {
-    return null;
-  }
-  // Get page title based on current route
+  };// Get page title based on current route
   const getPageTitle = () => {
     if (pathname === '/') return 'MeetHub';
     if (pathname === '/my-events') return 'My Events';
@@ -83,12 +80,16 @@ export default function GlobalHeader() {
     if (pathname === '/create-event') return 'Create Event';
     if (pathname?.includes('/event/') && pathname?.includes('/edit')) return 'Edit Event';
     if (pathname?.includes('/event/')) return 'Event Details';
+    if (pathname === '/moderator') return 'Moderator Dashboard';
     return 'MeetHub';
-  };// Check if current page is active
+  };
+
+  // Check if current page is active
   const isActivePage = (path: string) => {
     if (path === '/' && pathname === '/') return true;
     if (path === '/my-events' && pathname === '/my-events') return true;
     if (path === '/create-event' && pathname === '/create-event') return true;
+    if (path === '/moderator' && pathname === '/moderator') return true;
     // For profile, only highlight if viewing own profile
     if (path === '/profile' && user) {
       return pathname === `/profile/${user.id}`;
@@ -164,8 +165,7 @@ export default function GlobalHeader() {
 
               {/* Navigation Links */}
               {user && (
-                <>
-                  {/* Main Navigation: Home, My Events, Profile */}
+                <>                  {/* Main Navigation: Home, My Events, Profile, Moderator */}
                   <div className="flex rounded-md bg-white/20 backdrop-blur-sm p-0.5 border border-white/20">
                     <Link href="/">
                       <Button
@@ -209,6 +209,23 @@ export default function GlobalHeader() {
                         Profile
                       </Button>
                     </Link>
+                    {/* Moderator Dashboard - only show for moderators */}
+                    {isModerator && (
+                      <Link href="/moderator">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`rounded-sm transition-all text-xs px-1.5 py-0.5 h-6 min-h-0 ${
+                            isActivePage('/moderator') 
+                              ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200' 
+                              : 'text-white hover:bg-white/20 hover:text-white'
+                          }`}
+                        >
+                          <Shield className="w-3 h-3 mr-0.5" />
+                          Moderator
+                        </Button>
+                      </Link>
+                    )}
                   </div>
 
                   {/* Create Button - Separate */}
@@ -313,8 +330,7 @@ export default function GlobalHeader() {
                       Profile
                       <User className="w-4 h-4 ml-2" />
                     </Button>
-                  </Link>
-                  <Link href="/create-event" onClick={() => setIsMobileMenuOpen(false)}>
+                  </Link>                  <Link href="/create-event" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -328,8 +344,25 @@ export default function GlobalHeader() {
                       <Plus className="w-4 h-4 ml-2" />
                     </Button>
                   </Link>
+                  {/* Moderator Dashboard - only show for moderators */}
+                  {isModerator && (
+                    <Link href="/moderator" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`w-full justify-end rounded-md transition-all text-sm px-3 py-2 h-9 min-h-0 ${
+                          isActivePage('/moderator')
+                            ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200'
+                            : 'text-white hover:bg-white/20 hover:text-white'
+                        }`}
+                      >
+                        Moderator Dashboard
+                        <Shield className="w-4 h-4 ml-2" />
+                      </Button>
+                    </Link>
+                  )}
                 </>
-              )}              {/* Sign In/Sign Up for non-authenticated users */}
+              )}{/* Sign In/Sign Up for non-authenticated users */}
               {!user && (
                 <>                  <Button
                     variant="ghost"

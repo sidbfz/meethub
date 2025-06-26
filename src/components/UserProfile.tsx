@@ -259,13 +259,11 @@ export default function UserProfile({ profile, hostedEvents, currentUser, isLoad
             Sign Out
           </Button>
         </div>
-      )}
-
-      {/* Tabs */}
+      )}      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-1 h-auto flex-wrap justify-start">
-          <TabsTrigger value="hosted">Hosted Events</TabsTrigger>
-          <TabsTrigger value="joined">Joined Events</TabsTrigger>
+          <TabsTrigger value="hosted">Hosted Events ({hostedEventsCount})</TabsTrigger>
+          <TabsTrigger value="joined">Joined Events ({joinedEventsCount})</TabsTrigger>
         </TabsList>{/* Hosted Events Tab */}
         <TabsContent value="hosted">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

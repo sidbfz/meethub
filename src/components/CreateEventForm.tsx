@@ -437,7 +437,7 @@ export default function CreateEventForm({ eventId, initialData }: CreateEventFor
               max_participants: data.max_participants,
               image_url: imageUrl,
               host_id: refreshedSession.user.id, // Use the session user ID for RLS compliance
-              status: 'pending', // Set to pending for review
+              status: 'pending_approval', // Set to pending_approval for moderator review
             }
           ])
           .select()
