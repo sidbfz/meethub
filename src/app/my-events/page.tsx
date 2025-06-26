@@ -88,18 +88,10 @@ export default function MyEventsPage() {
       case 'approved':
         return <Badge className="bg-green-100 text-green-800">Approved</Badge>;      case 'concluded':
         return <Badge className="bg-purple-100 text-purple-800">Concluded</Badge>;
-      case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
       case 'pending_approval':
         return <Badge className="bg-yellow-100 text-yellow-800">Pending Approval</Badge>;
-      case 'needs_modification':
-        return <Badge className="bg-orange-100 text-orange-800">Needs Modification</Badge>;
       case 'cancelled':
-        return <Badge variant="destructive">Cancelled</Badge>;
-      case 'cancelled_by_host':
-        return <Badge variant="destructive">Cancelled by Host</Badge>;
-      case 'cancelled_by_moderator':
-        return <Badge variant="destructive">Cancelled by Moderator</Badge>;      case 'rejected':
+        return <Badge variant="destructive">Cancelled</Badge>;     case 'rejected':
         return <Badge className="bg-red-200 text-red-900 border-red-300">Rejected</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
@@ -111,14 +103,9 @@ export default function MyEventsPage() {
         return <CheckCircle className="w-4 h-4 text-green-600" />;
       case 'concluded':
         return <CheckCircle className="w-4 h-4 text-blue-600" />;
-      case 'pending':
       case 'pending_approval':
         return <Clock className="w-4 h-4 text-yellow-600" />;
-      case 'needs_modification':
-        return <AlertCircle className="w-4 h-4 text-orange-600" />;
       case 'cancelled':
-      case 'cancelled_by_host':
-      case 'cancelled_by_moderator':
       case 'rejected':
         return <X className="w-4 h-4 text-red-600" />;
       default:

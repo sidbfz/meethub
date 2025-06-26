@@ -2,12 +2,14 @@ import { notFound } from 'next/navigation';
 import EventDetailsClient from '@/components/EventDetailsClient';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
+// Updated interface for Next.js 15+ where params is a Promise
 interface EventPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // This will be a server component that fetches initial data
 export default async function EventPage({ params }: EventPageProps) {
+  // Await the params Promise
   const { id } = await params;
 
   try {
