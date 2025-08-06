@@ -10,7 +10,7 @@ export default function LoginPage() {
             Welcome Back
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
-            Sign in to your MeetHub account
+            Sign in to your FistBump account
           </p>
         </div>
 

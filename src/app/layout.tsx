@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MeetHub",
+  title: "FistBump",
   description: "Next.js 14 + TypeScript + Tailwind CSS + Shadcn/ui + Supabase",
 };
 

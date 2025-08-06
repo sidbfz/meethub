@@ -6,7 +6,7 @@ export function Header() {
     <header className="bg-primary text-primary-foreground p-4 shadow-md">
       <div className="container mx-auto flex items-center justify-between">
         <Link href="/" className="text-2xl font-bold">
-          MeetHub
+          FistBump
         </Link>
         <nav className="hidden md:flex space-x-4">
           <Link href="/" className="hover:underline">Home</Link>
