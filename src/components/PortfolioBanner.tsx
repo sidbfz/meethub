@@ -14,19 +14,19 @@ export default function PortfolioBanner() {
   return (
     <div className="border-blue-500 bg-blue-50 dark:bg-blue-900/20 border-b">
       <Alert className="border-transparent rounded-none relative">
-        <Info className="h-4 w-4 text-blue-600" />
         <AlertDescription className="text-blue-800 dark:text-blue-200 pr-16">
-          <div className="flex items-center justify-between">
-            <div>
-              <strong>Portfolio Demo:</strong> This is MeetHub - a full-stack event management platform 
-              built with Next.js, TypeScript, and Supabase for my portfolio.
-              <button
-                onClick={() => setIsExpanded(!isExpanded)}
-                className="ml-2 text-blue-600 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-100 underline"
-              >
-                {isExpanded ? 'Show less' : 'Learn more'}
-              </button>
-            </div>
+          {/* Info button and minimal text */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-100 hover:bg-blue-100 dark:hover:bg-blue-800/30 rounded-full transition-colors"
+              title="Portfolio information"
+            >
+              <Info className="h-4 w-4" />
+            </button>
+            <span className="text-blue-800 dark:text-blue-200 text-sm font-medium">
+              Portfolio Demo
+            </span>
           </div>
           
           {isExpanded && (

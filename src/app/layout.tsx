@@ -5,7 +5,6 @@ import AuthProvider from "@/components/AuthProvider";
 import QueryProvider from "@/components/QueryProvider";
 import ToasterProvider from "@/components/ToasterProvider";
 import GlobalHeader from "@/components/GlobalHeader";
-import PortfolioBanner from "@/components/PortfolioBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,9 +33,8 @@ export default function RootLayout({
       >
         <QueryProvider>
           <AuthProvider>
-            <PortfolioBanner />
             <GlobalHeader />
-            <div className="pt-12">
+            <div>
               {children}
             </div>
           </AuthProvider>

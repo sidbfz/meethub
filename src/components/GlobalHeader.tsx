@@ -3,9 +3,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Plus, Grid, Map, User, Users, Calendar, Home as HomeIcon, ArrowLeft, Menu, X, Shield } from 'lucide-react';
+import { Plus, Grid, Map, User, Users, Calendar, Home as HomeIcon, ArrowLeft, Menu, X, Shield, Info, Code, Database, MessageSquare, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/stores/authStore';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default function GlobalHeader() {
   const { user } = useAuthStore();
@@ -17,7 +19,9 @@ export default function GlobalHeader() {
 
   const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const infoRef = useRef<HTMLDivElement>(null);
 
   // Listen for view mode changes from other components
   useEffect(() => {
@@ -45,9 +49,12 @@ export default function GlobalHeader() {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMobileMenuOpen(false);
       }
+      if (infoRef.current && !infoRef.current.contains(event.target as Node)) {
+        setIsInfoOpen(false);
+      }
     };
 
-    if (isMobileMenuOpen) {
+    if (isMobileMenuOpen || isInfoOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
@@ -105,7 +112,7 @@ export default function GlobalHeader() {
   const handleBackClick = () => {
     router.back();
   };  return (
-    <div ref={menuRef} className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 border-b border-white/20 shadow-lg">
+    <div ref={menuRef} className="sticky top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 border-b border-white/20 shadow-lg">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
       <div className="absolute -top-5 -right-5 w-10 h-10 bg-white/5 rounded-full blur-xl"></div>
@@ -128,6 +135,80 @@ export default function GlobalHeader() {
               {getPageTitle()}
             </h1>
           </div>          <div className="flex items-center gap-1.5">
+            {/* Info Button - always visible */}
+            <div className="relative" ref={infoRef}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsInfoOpen(!isInfoOpen)}
+                className="text-white hover:bg-white/20 hover:text-white rounded-full p-1 h-7 w-7 min-h-0 min-w-0"
+                title="Project Information"
+              >
+                <Info className="w-4 h-4" />
+              </Button>
+              
+              {/* Info Popup */}
+              {isInfoOpen && (
+                <div className="absolute top-full left-0 mt-2 w-80 max-w-[calc(100vw-2rem)] z-50">
+                  <Card className="border-blue-200 bg-white shadow-xl">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-lg text-gray-900">MeetHub Portfolio Demo</h3>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsInfoOpen(false)}
+                          className="h-6 w-6 p-0 text-gray-500 hover:text-gray-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-3 text-sm">
+                        <div className="flex items-start gap-2">
+                          <Code className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <strong>Frontend:</strong> Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, React Query
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start gap-2">
+                          <Database className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <strong>Backend:</strong> Supabase (PostgreSQL, Auth, Real-time)
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start gap-2">
+                          <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <strong>Features:</strong> Real-time chat, event management, user authentication
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-3 border-t border-gray-200">
+                        <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                          <h4 className="font-medium text-amber-800 mb-2">Why Demo Mode?</h4>
+                          <p className="text-sm text-amber-700">
+                            I disabled the live Supabase connection and simulated all data because this is a portfolio demonstration. 
+                            Nobody actually uses this app, so maintaining a live backend with user registration would be unnecessary overhead.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-2">
+                        <p className="text-xs text-gray-600">
+                          <strong>Explore the interface</strong> to see all features in action! Authentication is simulated, 
+                          but you can navigate through all pages and interact with the demo data.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
+            
             {/* View Mode Toggle - always visible on home page */}
             {isHomePage && (
               <div className="flex rounded-md bg-white/20 backdrop-blur-sm p-0.5 border border-white/20">
@@ -289,6 +370,20 @@ export default function GlobalHeader() {
           <div className="md:hidden container mx-auto px-4 pb-2">
             <div className="mt-2 p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
               <div className="space-y-2">
+              {/* Info Button for Mobile */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsInfoOpen(!isInfoOpen);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full justify-start rounded-md transition-all text-sm px-3 py-2 h-9 min-h-0 text-white hover:bg-white/20 hover:text-white"
+              >
+                <Info className="w-4 h-4 mr-2" />
+                Project Info
+              </Button>
+              
               {/* Navigation Links for authenticated users */}              {user && (                <>                  <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
                     <Button
                       variant="ghost"
