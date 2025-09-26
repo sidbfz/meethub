@@ -5,6 +5,7 @@ import AuthProvider from "@/components/AuthProvider";
 import QueryProvider from "@/components/QueryProvider";
 import ToasterProvider from "@/components/ToasterProvider";
 import GlobalHeader from "@/components/GlobalHeader";
+import PortfolioBanner from "@/components/PortfolioBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FistBump",
+  title: "MeetHub",
   description: "Next.js 14 + TypeScript + Tailwind CSS + Shadcn/ui + Supabase",
 };
 
@@ -33,6 +34,7 @@ export default function RootLayout({
       >
         <QueryProvider>
           <AuthProvider>
+            <PortfolioBanner />
             <GlobalHeader />
             <div className="pt-12">
               {children}

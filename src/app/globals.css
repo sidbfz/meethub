@@ -144,11 +144,23 @@
   }
 }
 
-/* Disable scroll animations */
-* {
-  scroll-behavior: auto !important;
+/* Enable smooth scroll behavior */
+html {
+  scroll-behavior: smooth !important;
+  /* Fallback for older browsers */
+  -webkit-overflow-scrolling: touch;
 }
 
-html {
-  scroll-behavior: auto !important;
+* {
+  scroll-behavior: smooth !important;
+}
+
+/* Enhance scrolling experience */
+body {
+  scroll-behavior: smooth !important;
+}
+
+/* Ensure smooth scrolling works on all containers */
+.scroll-smooth {
+  scroll-behavior: smooth !important;
 }

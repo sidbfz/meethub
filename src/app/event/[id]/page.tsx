@@ -2,6 +2,9 @@ import { notFound } from 'next/navigation';
 import EventDetailsClient from '@/components/EventDetailsClient';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
+// Portfolio Demo: Using mock data instead of Supabase
+const DEMO_MODE = true;
+
 // Updated interface for Next.js 15+ where params is a Promise
 interface EventPageProps {
   params: Promise<{ id: string }>;
@@ -11,6 +14,12 @@ interface EventPageProps {
 export default async function EventPage({ params }: EventPageProps) {
   // Await the params Promise
   const { id } = await params;
+
+  // In demo mode, always pass null as initialEvent to let client handle it
+  if (DEMO_MODE) {
+    console.log('Demo Mode: Delegating event fetch to client for event:', id);
+    return <EventDetailsClient eventId={id} initialEvent={null} />;
+  }
 
   try {
     // Create server-side supabase client with auth context

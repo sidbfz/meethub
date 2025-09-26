@@ -52,7 +52,7 @@ export default function VerificationComplete() {
           {/* Success Message */}
           <div className="text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Welcome to FistBump! Your account is now active and ready to use.
+              Welcome to MeetHub! Your account is now active and ready to use.
             </p>
           </div>
 

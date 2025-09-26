@@ -1,11 +1,20 @@
 import { supabase } from '@/lib/supabase/client';
 import { Event, EventFilters, EventsResponse } from '@/lib/types/event';
+import { mockEvents, mockUsers, mockMessages } from '@/lib/mock-data';
 
 export const EVENTS_PER_PAGE = 12;
 
+// Portfolio Demo: Using mock data instead of Supabase
+const DEMO_MODE = true;
+
 export const eventsService = {
-  // Test Supabase connection
+  // Test Supabase connection (Demo mode always returns true)
   async testConnection(): Promise<boolean> {
+    if (DEMO_MODE) {
+      console.log('Demo Mode: Mock connection successful');
+      return true;
+    }
+    
     try {
       console.log('Testing Supabase connection...');
       const { data, error } = await supabase.from('events').select('count', { count: 'exact', head: true });
@@ -21,11 +30,74 @@ export const eventsService = {
       console.error('Connection test error:', err);
       return false;
     }
-  },  // Fetch approved events with infinite scroll
+  },
+
+  // Fetch approved events with infinite scroll (Demo mode uses mock data)
   async getApprovedEvents(
     pageParam: number = 0,
     filters: EventFilters = {}
   ): Promise<EventsResponse> {
+    if (DEMO_MODE) {
+      console.log('Demo Mode: Fetching mock events with filters:', filters);
+      
+      // Simulate network delay for realistic experience
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Filter mock events based on provided filters
+      let filteredEvents = [...mockEvents];
+      
+      if (filters.category && filters.category !== 'all') {
+        filteredEvents = filteredEvents.filter(event => event.category === filters.category);
+      }
+      
+      if (filters.search) {
+        const searchTerm = filters.search.toLowerCase();
+        filteredEvents = filteredEvents.filter(event => 
+          event.title.toLowerCase().includes(searchTerm) ||
+          event.description.toLowerCase().includes(searchTerm) ||
+          event.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+        );
+      }
+      
+      if (filters.date) {
+        filteredEvents = filteredEvents.filter(event => event.date === filters.date);
+      }
+      
+      // Transform mock events to match the expected Event interface from types/event.ts
+      const transformedEvents = filteredEvents.map(mockEvent => ({
+        id: mockEvent.id,
+        title: mockEvent.title,
+        description: mockEvent.description,
+        category: mockEvent.category,
+        date_time: `${mockEvent.date}T${mockEvent.time}:00Z`,
+        max_participants: mockEvent.maxParticipants,
+        image_url: mockEvent.imageUrl,
+        host_id: mockEvent.host.id,
+        status: 'approved' as const,
+        created_at: mockEvent.createdAt,
+        updated_at: mockEvent.createdAt,
+        address: mockEvent.location.address,
+        city: mockEvent.location.address.split(',').pop()?.trim() || '',
+        host: {
+          id: mockEvent.host.id,
+          full_name: mockEvent.host.name,
+          email: mockEvent.host.email,
+          avatar_url: mockEvent.host.avatarUrl
+        }
+      }));
+      
+      // Paginate results
+      const startIndex = pageParam * EVENTS_PER_PAGE;
+      const endIndex = startIndex + EVENTS_PER_PAGE;
+      const paginatedEvents = transformedEvents.slice(startIndex, endIndex);
+      
+      return {
+        events: paginatedEvents,
+        nextCursor: endIndex < transformedEvents.length ? pageParam + 1 : null,
+        hasMore: endIndex < transformedEvents.length
+      };
+    }
+    
     console.log('Fetching approved events with filters:', filters);
       // Build the query for approved events
     let query = supabase
@@ -226,6 +298,31 @@ export const eventsService = {
   
   // Check if user is participant - Uses public SELECT policy
   async isParticipant(eventId: string, userId: string): Promise<boolean> {
+    console.log('isParticipant called - DEMO_MODE:', DEMO_MODE, 'eventId:', eventId, 'userId:', userId);
+    
+    // Always try demo mode first if eventId starts with 'demo-' or is a demo event  
+    const isDemoEvent = eventId.startsWith('demo-') || ['demo-event-1', 'demo-event-2', 'event1', 'event2', 'event3', 'event4'].includes(eventId);
+    
+    if (DEMO_MODE || isDemoEvent) {
+      console.log('Demo Mode: Checking participation for user:', userId, 'in event:', eventId);
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      try {
+        // Demo user is always a participant in demo events
+        if (userId === 'demo-user-1') {
+          return true;
+        }
+        
+        // Other users are not participants in demo mode
+        return false;
+      } catch (error) {
+        console.error('Demo Mode: Error in isParticipant:', error);
+        return false;
+      }
+    }
+    
     // First check if user is the host (hosts are always participants)
     const { data: eventData, error: eventError } = await supabase
       .from('events')
@@ -262,6 +359,86 @@ export const eventsService = {
 
   // Get single event with basic details (no participants to avoid RLS issues)
   async getEventDetails(eventId: string): Promise<Event | null> {
+    console.log('getEventDetails called - DEMO_MODE:', DEMO_MODE, 'eventId:', eventId);
+    console.log('mockEvents available:', mockEvents ? mockEvents.length : 'undefined');
+    
+    // Always try demo mode first if eventId starts with 'demo-' or is a demo event
+    const isDemoEvent = eventId.startsWith('demo-') || ['demo-event-1', 'demo-event-2', 'event1', 'event2', 'event3', 'event4'].includes(eventId);
+    
+    if (DEMO_MODE || isDemoEvent) {
+      console.log('Demo Mode: Fetching mock event details for event:', eventId);
+      
+      // Simulate network delay for realistic experience
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      try {
+        // Find the event in mock data
+        console.log('Available mock event IDs:', mockEvents.map(e => e.id));
+        const mockEvent = mockEvents.find(event => event.id === eventId);
+        
+        if (!mockEvent) {
+          console.log('Demo Mode: Event not found in mock data, eventId:', eventId);
+          return null;
+        }
+        
+        console.log('Found mockEvent:', mockEvent.id, mockEvent.title);
+        console.log('mockEvent.host:', mockEvent.host);
+        
+        // Transform mock event to match the expected Event interface
+        const transformedEvent: Event = {
+          id: mockEvent.id,
+          title: mockEvent.title,
+          description: mockEvent.description,
+          category: mockEvent.category,
+          date_time: `${mockEvent.date}T${mockEvent.time}:00Z`,
+          max_participants: mockEvent.maxParticipants,
+          image_url: mockEvent.imageUrl,
+          host_id: mockEvent.host.id,
+          status: 'approved' as const,
+          created_at: mockEvent.createdAt,
+          updated_at: mockEvent.createdAt,
+          address: mockEvent.location.address,
+          city: mockEvent.location.address.split(',').pop()?.trim() || '',
+          host: {
+            id: mockEvent.host.id,
+            full_name: mockEvent.host.name,
+            email: mockEvent.host.email,
+            avatar_url: mockEvent.host.avatarUrl
+          }
+        };
+        
+        console.log('Demo Mode: Event details fetched successfully:', transformedEvent.id, transformedEvent.title);
+        return transformedEvent;
+      } catch (error) {
+        console.error('Demo Mode: Error in getEventDetails:', error);
+        // Fallback: create a basic demo event if it's a demo event ID
+        if (eventId === 'demo-event-1') {
+          return {
+            id: 'demo-event-1',
+            title: 'Demo Event 1 - Tech Meetup',
+            description: 'This is a demonstration event to showcase the MeetHub platform functionality.',
+            category: 'Technology',
+            date_time: '2025-08-15T18:00:00Z',
+            max_participants: 30,
+            image_url: 'https://picsum.photos/seed/demotech/800/400',
+            host_id: 'demo-user-1',
+            status: 'approved' as const,
+            created_at: '2025-07-01T10:00:00Z',
+            updated_at: '2025-07-01T10:00:00Z',
+            address: '123 Demo Street, Demo City, DC',
+            city: 'Demo City',
+            host: {
+              id: 'demo-user-1',
+              full_name: 'Demo User',
+              email: 'demo@meethub.com',
+              avatar_url: 'https://i.pravatar.cc/150?img=0'
+            }
+          };
+        }
+        return null;
+      }
+    }
+    
     try {
       console.log('Fetching event details for event:', eventId);
       
@@ -295,6 +472,44 @@ export const eventsService = {
   },
   // Get events hosted by user (all statuses for host management)
   async getHostEvents(userId: string): Promise<Event[]> {
+    if (DEMO_MODE && userId === 'demo-user-1') {
+      // Demo Mode: Return demo events hosted by the demo user from mock data
+      console.log('Demo Mode: Fetching demo host events for user:', userId);
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Filter mock events hosted by the demo user
+      const demoHostEvents = mockEvents.filter(event => event.host.id === userId);
+      
+      // Transform to match Event interface from types/event.ts
+      const transformedEvents = demoHostEvents.map(mockEvent => ({
+        id: mockEvent.id,
+        title: mockEvent.title,
+        description: mockEvent.description,
+        category: mockEvent.category,
+        date_time: `${mockEvent.date}T${mockEvent.time}:00Z`,
+        max_participants: mockEvent.maxParticipants,
+        image_url: mockEvent.imageUrl,
+        host_id: mockEvent.host.id,
+        status: 'approved' as const,
+        created_at: mockEvent.createdAt,
+        updated_at: mockEvent.createdAt,
+        address: mockEvent.location.address,
+        city: mockEvent.location.address.split(',').pop()?.trim() || '',
+        participants_count: mockEvent.currentParticipants,
+        host: {
+          id: mockEvent.host.id,
+          full_name: mockEvent.host.name,
+          email: mockEvent.host.email,
+          avatar_url: mockEvent.host.avatarUrl
+        }
+      }));
+      
+      console.log('Demo Mode: Returning', transformedEvents.length, 'demo host events');
+      return transformedEvents;
+    }
+
     try {
       console.log('Fetching host events for user:', userId);
       
@@ -361,6 +576,57 @@ export const eventsService = {
   },
   // Get event participants - Uses public SELECT policy "participants_for_approved_events"
   async getEventParticipants(eventId: string) {
+    // Always try demo mode first if eventId starts with 'demo-' or is a demo event  
+    const isDemoEvent = eventId.startsWith('demo-') || ['demo-event-1', 'demo-event-2', 'event1', 'event2', 'event3', 'event4'].includes(eventId);
+    
+    if (DEMO_MODE || isDemoEvent) {
+      // Demo Mode: Return mock participants
+      console.log('Demo Mode: Fetching mock participants for event:', eventId);
+      
+      // Simulate network delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Return mock participants based on event
+      const mockParticipants = [
+        {
+          id: 'participant-1',
+          user_id: 'user2',
+          status: 'joined',
+          joined_at: '2025-07-15T10:00:00Z',
+          user: {
+            id: 'user2',
+            full_name: 'Bob Johnson',
+            avatar_url: 'https://i.pravatar.cc/150?img=2'
+          }
+        },
+        {
+          id: 'participant-2',
+          user_id: 'user3',
+          status: 'joined',
+          joined_at: '2025-07-16T14:30:00Z',
+          user: {
+            id: 'user3',
+            full_name: 'Charlie Brown',
+            avatar_url: 'https://i.pravatar.cc/150?img=3'
+          }
+        },
+        {
+          id: 'participant-3',
+          user_id: 'demo-user-1',
+          status: 'joined',
+          joined_at: '2025-07-17T09:15:00Z',
+          user: {
+            id: 'demo-user-1',
+            full_name: 'Demo User',
+            avatar_url: 'https://i.pravatar.cc/150?img=0'
+          }
+        }
+      ];
+      
+      console.log('Demo Mode: Returning', mockParticipants.length, 'mock participants');
+      return mockParticipants;
+    }
+
     try {
       console.log('Fetching participants for event:', eventId);
 

@@ -4,6 +4,19 @@ import { Event, User, Message, Conversation, ModerationItem } from './types';
 // Mock Users
 export const mockUsers: User[] = [
   {
+    id: 'demo-user-1',
+    name: 'Demo User',
+    email: 'demo@meethub.com',
+    avatarUrl: 'https://i.pravatar.cc/150?img=0',
+    bio: 'This is a demo user account to showcase MeetHub functionality.',
+    location: 'Demo City, DC',
+    website: 'https://demo.meethub.com',
+    interests: ['Demo', 'Technology', 'Networking', 'Testing'],
+    eventsHosted: ['demo-event-1', 'demo-event-2'],
+    eventsAttended: ['event1', 'event2'],
+    memberSince: '2023-01-01',
+  },
+  {
     id: 'user1',
     name: 'Alice Smith',
     email: 'alice@example.com',
@@ -59,6 +72,54 @@ export const mockUsers: User[] = [
 
 // Mock Events
 export const mockEvents: Event[] = [
+  {
+    id: 'demo-event-1',
+    title: 'Demo Event 1 - Tech Meetup',
+    description: 'This is a demonstration event to showcase the MeetHub platform functionality. Join fellow tech enthusiasts for networking and discussions!',
+    category: 'Technology',
+    date: '2025-08-15',
+    time: '18:00',
+    duration: 120,
+    location: {
+      address: '123 Demo Street, Demo City, DC',
+      venueName: 'Demo Tech Hub',
+      lat: 40.7128,
+      lng: -74.0060,
+    },
+    maxParticipants: 30,
+    currentParticipants: 12,
+    host: mockUsers[0], // Demo User
+    attendees: [mockUsers[2], mockUsers[3]],
+    imageUrl: 'https://picsum.photos/seed/demotech/800/400',
+    tags: ['Demo', 'Technology', 'Networking', 'Meetup'],
+    approvalRequired: false,
+    status: 'upcoming',
+    createdAt: '2025-07-01T10:00:00Z',
+  },
+  {
+    id: 'demo-event-2', 
+    title: 'Demo Event 2 - Photography Workshop',
+    description: 'A hands-on photography workshop perfect for demonstrating MeetHub\'s event features. All skill levels welcome!',
+    category: 'Photography',
+    date: '2025-08-20',
+    time: '14:00',
+    duration: 180,
+    location: {
+      address: '456 Demo Avenue, Demo City, DC',
+      venueName: 'Demo Art Studio',
+      lat: 40.7580,
+      lng: -73.9855,
+    },
+    maxParticipants: 20,
+    currentParticipants: 15,
+    host: mockUsers[0], // Demo User 
+    attendees: [mockUsers[1], mockUsers[3], mockUsers[4]],
+    imageUrl: 'https://picsum.photos/seed/demophoto/800/400',
+    tags: ['Demo', 'Photography', 'Workshop', 'Creative'],
+    approvalRequired: false,
+    status: 'upcoming',
+    createdAt: '2025-07-02T11:00:00Z',
+  },
   {
     id: 'event1',
     title: 'Next.js Conf Watch Party',

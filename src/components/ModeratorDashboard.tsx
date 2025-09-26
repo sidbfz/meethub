@@ -15,7 +15,8 @@ import {
   ArrowLeft,
   Loader2,
   AlertTriangle,
-  RefreshCw
+  RefreshCw,
+  MessageSquare
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,8 +25,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useAuthStore } from '@/lib/stores/authStore';
 import { useModeratorData } from '@/lib/hooks/useModeratorData';
+import ModeratorHostChat from './ModeratorHostChat';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -33,6 +36,7 @@ export default function ModeratorDashboard() {
   const { user } = useAuthStore();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('pending');
+  const [selectedEvent, setSelectedEvent] = useState<{ id: string; hostId: string } | null>(null);
   const hasScrolledToTop = useRef(false);
 
   const {
@@ -72,6 +76,7 @@ export default function ModeratorDashboard() {
       }, 50);
     }
   }, [loading]);
+  
   // Safe date formatting
   const safeFormatDate = (dateString: string, formatStr: string) => {
     try {
@@ -81,7 +86,9 @@ export default function ModeratorDashboard() {
     } catch (error) {
       return 'Invalid date';
     }
-  };  // Event card component
+  }; 
+  
+  // Event card component
   const EventCard = ({ event, showActions = false }: { event: any, showActions?: boolean }) => (
     <div className="bg-white border border-gray-200 rounded-lg p-3 sm:p-6 hover:shadow-md transition-shadow cursor-pointer" onClick={() => router.push(`/event/${event.id}`)}>
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between -mb-4 gap-3">
@@ -145,7 +152,8 @@ export default function ModeratorDashboard() {
               </div>
             </div>
           )}
-        </div>        {event.image_url && (
+        </div> 
+        {event.image_url && (
           <div className="w-full sm:w-32 md:w-40 lg:w-48 sm:ml-4 flex-shrink-0 order-first sm:order-last">
             <Image
               src={event.image_url}
@@ -156,7 +164,8 @@ export default function ModeratorDashboard() {
             />
           </div>
         )}
-      </div>      {showActions && event.status === 'pending_approval' && (
+      </div> 
+      {showActions && event.status === 'pending_approval' && (
         <div className="flex gap-2 sm:gap-3 pt-3 sm:pt-4 border-t border-gray-200" onClick={(e) => e.stopPropagation()}>
           <Button
             onClick={(e) => {
@@ -191,79 +200,93 @@ export default function ModeratorDashboard() {
             )}
             Reject
           </Button>
+          <Button
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedEvent({ id: event.id, hostId: event.host.id });
+            }}
+            size="sm"
+            variant="outline"
+            className="flex-1 text-sm"
+          >
+            <MessageSquare className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+            Message Host
+          </Button>
         </div>
       )}
     </div>
-  );  // No need to check user role here since it's already checked in the page component
-  return (
-    <div className="container mx-auto px-2 sm:px-4 pb-8">
-      {/* Events Tabs */}
-      <div className="w-full">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          {/* Desktop Tabs */}
-          <TabsList className="hidden lg:grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="pending" className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Pending ({stats.pending})
-            </TabsTrigger>
-            <TabsTrigger value="approved" className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              Approved ({stats.approved})
-            </TabsTrigger>
-            <TabsTrigger value="rejected" className="flex items-center gap-2">
-              <XCircle className="w-4 h-4" />
-              Rejected ({stats.rejected})
-            </TabsTrigger>
-            <TabsTrigger value="concluded" className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              Concluded ({stats.concluded})
-            </TabsTrigger>
-            <TabsTrigger value="cancelled" className="flex items-center gap-2">
-              <XCircle className="w-4 h-4" />
-              Cancelled ({stats.cancelled})
-            </TabsTrigger>
-          </TabsList>
+  );
 
-          {/* Mobile Dropdown Menu */}
-          <div className="lg:hidden mb-6">
-            <Select value={activeTab} onValueChange={setActiveTab}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select event status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    Pending ({stats.pending})
-                  </div>
-                </SelectItem>
-                <SelectItem value="approved">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                    Approved ({stats.approved})
-                  </div>
-                </SelectItem>
-                <SelectItem value="rejected">
-                  <div className="flex items-center gap-2">
-                    <XCircle className="w-4 h-4 text-red-600" />
-                    Rejected ({stats.rejected})
-                  </div>
-                </SelectItem>
-                <SelectItem value="concluded">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="w-4 h-4 text-purple-600" />
-                    Concluded ({stats.concluded})
-                  </div>
-                </SelectItem>
-                <SelectItem value="cancelled">
-                  <div className="flex items-center gap-2">
-                    <XCircle className="w-4 h-4 text-gray-600" />
-                    Cancelled ({stats.cancelled})
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+  return (
+    <> {/* Added React Fragment */}
+      <div className="container mx-auto px-2 sm:px-4 pb-8">
+        {/* Events Tabs */}
+        <div className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            {/* Desktop Tabs */}
+            <TabsList className="hidden lg:grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="pending" className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Pending ({stats.pending})
+              </TabsTrigger>
+              <TabsTrigger value="approved" className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                Approved ({stats.approved})
+              </TabsTrigger>
+              <TabsTrigger value="rejected" className="flex items-center gap-2">
+                <XCircle className="w-4 h-4" />
+                Rejected ({stats.rejected})
+              </TabsTrigger>
+              <TabsTrigger value="concluded" className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                Concluded ({stats.concluded})
+              </TabsTrigger>
+              <TabsTrigger value="cancelled" className="flex items-center gap-2">
+                <XCircle className="w-4 h-4" />
+                Cancelled ({stats.cancelled})
+              </TabsTrigger>
+            </TabsList>
+
+            {/* Mobile Dropdown Menu */}
+            <div className="lg:hidden mb-6">
+              <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select event status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pending">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Pending ({stats.pending})
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="approved">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-green-600" />
+                      Approved ({stats.approved})
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="rejected">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-red-600" />
+                      Rejected ({stats.rejected})
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="concluded">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4 text-purple-600" />
+                      Concluded ({stats.concluded})
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="cancelled">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="w-4 h-4 text-gray-600" />
+                      Cancelled ({stats.cancelled})
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
             <TabsContent value="pending">
               {loading ? (
@@ -276,7 +299,8 @@ export default function ModeratorDashboard() {
                   <CheckCircle className="w-16 h-16 mx-auto text-green-500 mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">All caught up!</h3>
                   <p className="text-gray-600">No events pending approval at the moment.</p>
-                </div>              ) : (
+                </div> 
+              ) : (
                 <div className="grid gap-4 sm:gap-6">
                   {pendingEvents.map((event) => (
                     <EventCard key={event.id} event={event} showActions={true} />
@@ -366,9 +390,26 @@ export default function ModeratorDashboard() {
                     <EventCard key={event.id} event={event} />
                   ))}
                 </div>
-              )}            </TabsContent>
+              )}
+            </TabsContent>
           </Tabs>
         </div>
       </div>
-    );
-  }
+      <Dialog open={!!selectedEvent} onOpenChange={(isOpen) => !isOpen && setSelectedEvent(null)}>
+        <DialogContent className="max-w-4xl h-[80vh]">
+          <DialogHeader>
+            <DialogTitle>Moderator-Host Chat</DialogTitle>
+          </DialogHeader>
+          {selectedEvent && user && (
+            <ModeratorHostChat
+              key={selectedEvent.id}
+              eventId={selectedEvent.id}
+              hostId={selectedEvent.hostId}
+              moderatorId={user.id}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+    </> // Closing React Fragment
+  );
+}

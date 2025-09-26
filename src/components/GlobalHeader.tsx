@@ -74,14 +74,14 @@ export default function GlobalHeader() {
     window.dispatchEvent(new CustomEvent('viewModeChange', { detail: mode }));
   };// Get page title based on current route
   const getPageTitle = () => {
-    if (pathname === '/') return 'FistBump';
+    if (pathname === '/') return 'MeetHub';
     if (pathname === '/my-events') return 'My Events';
     if (pathname?.includes('/profile')) return 'Profile';
     if (pathname === '/create-event') return 'Create Event';
     if (pathname?.includes('/event/') && pathname?.includes('/edit')) return 'Edit Event';
     if (pathname?.includes('/event/')) return 'Event Details';
     if (pathname === '/moderator') return 'Moderator Dashboard';
-    return 'FistBump';
+    return 'MeetHub';
   };
 
   // Check if current page is active

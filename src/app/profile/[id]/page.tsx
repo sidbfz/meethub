@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import { useAuthStore } from '@/lib/stores/authStore';
 import UserProfile from '@/components/UserProfile';
+import { mockUsers, mockEvents } from '@/lib/mock-data';
+
+// Portfolio Demo: Using mock data instead of Supabase
+const DEMO_MODE = true;
 
 interface Props {
   params: Promise<{
@@ -43,6 +47,88 @@ export default function ProfilePage({ params }: Props) {
         console.log('Fetching profile for user ID:', userId);
         console.log('Current user:', currentUser?.id);
         console.log('Auth loading:', authLoading);
+        
+        // Demo Mode: Use mock data
+        const isDemoUser = userId.startsWith('demo-') || userId === 'demo-user-1' || ['user1', 'user2', 'user3', 'user4'].includes(userId);
+        
+        if (DEMO_MODE || isDemoUser) {
+          console.log('Demo Mode: Fetching mock profile for user:', userId);
+          
+          // Simulate network delay
+          await new Promise(resolve => setTimeout(resolve, 800));
+          
+          // Find user in mock data
+          const mockUser = mockUsers.find(user => user.id === userId);
+          
+          if (!mockUser) {
+            console.log('Demo Mode: User not found in mock data, trying hardcoded fallback');
+            
+            // Hardcoded fallback for common demo users
+            if (userId === 'demo-user-1') {
+              const fallbackProfile = {
+                id: 'demo-user-1',
+                full_name: 'Demo User',
+                email: 'demo@meethub.com',
+                avatar_url: 'https://i.pravatar.cc/150?img=0',
+                bio: 'This is a demo user account to showcase MeetHub functionality.',
+                location: 'Demo City, DC',
+                website: 'https://demo.meethub.com',
+                interests: ['Demo', 'Technology', 'Networking', 'Testing'],
+                member_since: '2023-01-01'
+              };
+              
+              setProfile(fallbackProfile);
+              setHostedEvents([]); // Set empty hosted events for fallback
+              setLoading(false);
+              return;
+            }
+            
+            setError('Profile not found');
+            setLoading(false);
+            return;
+          }
+          
+          // Transform to expected profile format
+          const profileData = {
+            id: mockUser.id,
+            full_name: mockUser.name,
+            email: mockUser.email,
+            avatar_url: mockUser.avatarUrl,
+            bio: mockUser.bio,
+            location: mockUser.location,
+            website: mockUser.website,
+            interests: mockUser.interests,
+            member_since: mockUser.memberSince
+          };
+          
+          console.log('Demo Mode: Profile found:', profileData.full_name);
+          setProfile(profileData);
+          
+          // Get hosted events from mock data
+          const userHostedEvents = mockEvents.filter(event => event.host.id === userId);
+          
+          // Transform to expected format
+          const transformedHostedEvents = userHostedEvents.map(mockEvent => ({
+            id: mockEvent.id,
+            title: mockEvent.title,
+            description: mockEvent.description,
+            category: mockEvent.category,
+            date_time: `${mockEvent.date}T${mockEvent.time}:00Z`,
+            max_participants: mockEvent.maxParticipants,
+            image_url: mockEvent.imageUrl,
+            host_id: mockEvent.host.id,
+            status: 'approved' as const,
+            created_at: mockEvent.createdAt,
+            updated_at: mockEvent.createdAt,
+            address: mockEvent.location.address,
+            city: mockEvent.location.address.split(',').pop()?.trim() || '',
+            participants_count: mockEvent.currentParticipants
+          }));
+          
+          setHostedEvents(transformedHostedEvents);
+          setLoading(false);
+          return;
+        }
         
         // First, try to get just the basic user profile
         const { data: profileData, error: profileError } = await supabase

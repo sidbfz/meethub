@@ -3,11 +3,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
-import { Send, Loader2, MessageCircle } from 'lucide-react';
+import { Send, Loader2, MessageCircle, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { mockMessages } from '@/lib/mock-data';
 import { RealtimeChannel } from '@supabase/supabase-js';
+
+// Portfolio Demo: Using mock data instead of real chat
+const DEMO_MODE = true;
 
 interface Message {
   id: string;
@@ -72,6 +77,26 @@ export default function EventChatSimple({ eventId }: EventChatSimpleProps) {
   // Get current user and check participation
   useEffect(() => {
     const getCurrentUser = async () => {
+      if (DEMO_MODE) {
+        // Demo Mode: Simulate authentication and participation
+        const demoUser = {
+          id: 'demo-user-1',
+          email: 'demo@example.com',
+          user_metadata: { full_name: 'Demo User' },
+          app_metadata: {},
+          aud: 'authenticated',
+          created_at: new Date().toISOString()
+        } as User;
+        
+        setUser(demoUser);
+        setIsHost(false); // Demo user is not a host
+        setHostId('user1'); // Alice Smith is the host in demo
+        setIsParticipant(true); // Demo user can participate
+        setLoading(false);
+        console.log('Demo Mode: User authenticated with demo data');
+        return;
+      }
+
       try {
         const { data: { user } } = await supabase.auth.getUser();
         setUser(user);
@@ -109,6 +134,70 @@ export default function EventChatSimple({ eventId }: EventChatSimpleProps) {
     getCurrentUser();
   }, [eventId]);  // Load messages from database (used on initial load and periodic refresh)
   const loadMessages = async () => {
+    if (DEMO_MODE) {
+      // Demo Mode: Create mock event chat messages
+      console.log('📥 Demo Mode: Loading mock messages for event:', eventId);
+      setTimeout(() => {
+        const demoEventMessages = [
+          {
+            id: 'chat1',
+            event_id: eventId,
+            user_id: 'user1',
+            content: 'Welcome everyone! Excited to have you all here today.',
+            created_at: '2025-07-20T08:30:00Z',
+            users: {
+              id: 'user1',
+              full_name: 'Alice Smith',
+              email: 'alice@example.com',
+              avatar_url: 'https://i.pravatar.cc/150?img=1'
+            }
+          },
+          {
+            id: 'chat2',
+            event_id: eventId,
+            user_id: 'user2',
+            content: 'Thanks for organizing this, Alice! Looking forward to it.',
+            created_at: '2025-07-20T08:35:00Z',
+            users: {
+              id: 'user2',
+              full_name: 'Bob Johnson',
+              email: 'bob@example.com',
+              avatar_url: 'https://i.pravatar.cc/150?img=2'
+            }
+          },
+          {
+            id: 'chat3',
+            event_id: eventId,
+            user_id: 'user3',
+            content: 'Should we bring anything specific?',
+            created_at: '2025-07-20T08:40:00Z',
+            users: {
+              id: 'user3',
+              full_name: 'Charlie Brown',
+              email: 'charlie@example.com',
+              avatar_url: 'https://i.pravatar.cc/150?img=3'
+            }
+          },
+          {
+            id: 'chat4',
+            event_id: eventId,
+            user_id: 'user1',
+            content: 'Just bring yourself and your enthusiasm! Everything else is provided.',
+            created_at: '2025-07-20T08:42:00Z',
+            users: {
+              id: 'user1',
+              full_name: 'Alice Smith',
+              email: 'alice@example.com',
+              avatar_url: 'https://i.pravatar.cc/150?img=1'
+            }
+          }
+        ];
+        setMessages(demoEventMessages as Message[]);
+        console.log('📥 Demo Mode: Loaded', demoEventMessages.length, 'mock chat messages');
+      }, 500); // Simulate network delay
+      return;
+    }
+
     if (!user || !isParticipant) {
       console.log('📥 Skipping message load - user not authenticated or not participant');
       return;
@@ -403,12 +492,56 @@ export default function EventChatSimple({ eventId }: EventChatSimpleProps) {
       setJustSentMessage(false);
     }
   }, [messages, justSentMessage]);
-  // Send message using hybrid approach
+  // Send message using hybrid approach (Demo mode shows mock behavior)
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !user || sending) return;
 
     setSending(true);
     const messageContent = newMessage.trim();
+    
+    if (DEMO_MODE) {
+      // Demo Mode: Simulate sending a message
+      const demoMessage = {
+        id: `demo-${Date.now()}`,
+        event_id: eventId,
+        user_id: user.id,
+        content: messageContent,
+        created_at: new Date().toISOString(),
+        users: {
+          id: user.id,
+          full_name: 'Demo User',
+          email: 'demo@example.com',
+          avatar_url: 'https://i.pravatar.cc/150?img=0'
+        }
+      };
+
+      setMessages(prev => [...prev, demoMessage as Message]);
+      setNewMessage('');
+      
+      // Simulate sending delay
+      setTimeout(() => {
+        setSending(false);
+        // Add an auto-reply for demo purposes
+        setTimeout(() => {
+          const autoReply = {
+            id: `auto-${Date.now()}`,
+            event_id: eventId,
+            user_id: 'user1',
+            content: 'Thanks for your message! (This is an automated demo response)',
+            created_at: new Date().toISOString(),
+            users: {
+              id: 'user1',
+              full_name: 'Alice Smith (Demo)',
+              email: 'alice@example.com',
+              avatar_url: 'https://i.pravatar.cc/150?img=1'
+            }
+          };
+          setMessages(prev => [...prev, autoReply as Message]);
+        }, 1000);
+      }, 800);
+      return;
+    }
+
     const tempId = `temp-${Date.now()}`;
     
     // Optimistic UI: Add message immediately with temporary ID
@@ -612,7 +745,22 @@ export default function EventChatSimple({ eventId }: EventChatSimpleProps) {
             )}
           </div>
         </div>
-      </div>{/* Messages Area - Fixed height with scroll */}
+      </div>
+
+      {/* Demo Mode Notice */}
+      {DEMO_MODE && (
+        <div className="px-4 py-2 bg-yellow-50 dark:bg-yellow-900/20 border-b border-yellow-200 dark:border-yellow-800">
+          <Alert className="border-yellow-400 bg-transparent p-2">
+            <Info className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-sm text-yellow-800 dark:text-yellow-200">
+              <strong>Demo Mode:</strong> This chat shows mock messages for portfolio demonstration. 
+              Real-time chat is disabled.
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+
+      {/* Messages Area - Fixed height with scroll */}
       <div className="flex-1 overflow-y-auto bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 min-h-0">
         <div className="px-3 md:px-4 py-3 md:py-4 space-y-3">
           {messages.length === 0 ? (

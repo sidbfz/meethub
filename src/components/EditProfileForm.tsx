@@ -10,17 +10,22 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Avatar } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Save, 
   User, 
   Plus,
   X,
   Upload,
-  ArrowLeft
+  ArrowLeft,
+  Info
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 import Link from 'next/link';
+
+// Portfolio Demo: Disable real profile editing
+const DEMO_MODE = true;
 
 interface ProfileData {
   id: string;
@@ -129,6 +134,17 @@ export default function EditProfileForm({ profile }: Props) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (DEMO_MODE) {
+      // Demo Mode: Simulate profile update
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+        toast.success('Profile updated successfully (Demo Mode)');
+        // Don't actually navigate, just show success message
+      }, 1500);
+      return;
+    }
+    
     try {
       setLoading(true);
       
@@ -172,6 +188,17 @@ export default function EditProfileForm({ profile }: Props) {
         </CardHeader>
         
         <CardContent className="space-y-6">
+          {/* Demo Mode Notice */}
+          {DEMO_MODE && (
+            <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-900/20">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800 dark:text-blue-200">
+                <strong>Demo Mode:</strong> Profile editing is disabled for portfolio demonstration. 
+                Changes will appear to save but won't persist.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           {/* Avatar Section */}
           <div className="space-y-4">
             <Label>Profile Picture</Label>

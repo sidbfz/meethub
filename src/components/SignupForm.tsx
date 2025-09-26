@@ -55,10 +55,28 @@ export default function SignupForm() {
   });
 
   const onSubmit = async (data: SignupFormData) => {
+    // Portfolio Demo: Simulate successful signup and redirect to login
+    setIsLoading(true);
+    setAuthError("");
+    setSuccessMessage("");
+
+    // Simulate loading for demo
+    setTimeout(() => {
+      setIsLoading(false);
+      setSuccessMessage("Portfolio Demo: Account creation is simulated. You can now use the demo login credentials to explore the authenticated features!");
+      reset();
+    }, 2000);
+
+    return;
+
+    // Original Supabase authentication code (commented out for portfolio demo)
+    /*
     try {
       setIsLoading(true);
       setAuthError("");
-      setSuccessMessage("");      const { data: authData, error } = await supabase.auth.signUp({
+      setSuccessMessage("");
+
+      const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -73,7 +91,9 @@ export default function SignupForm() {
       if (error) {
         setAuthError(error.message);
         return;
-      }      if (authData.user) {
+      }
+
+      if (authData.user) {
         setSuccessMessage(
           `Welcome ${data.name}! Account created successfully. Please check your email to verify your account.`
         );
@@ -86,6 +106,7 @@ export default function SignupForm() {
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   return (
@@ -205,6 +226,42 @@ export default function SignupForm() {
             )}
           </Button>
         </form>
+
+        {/* Demo Credentials Card */}
+        <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="flex items-start gap-3">
+            <div className="bg-blue-100 dark:bg-blue-800 rounded-full p-1">
+              <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                🎯 Skip Signup - Use Demo Login
+              </h3>
+              <div className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
+                <p className="mb-3">Instead of signing up, use these demo credentials to explore all features:</p>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Email:</span>
+                  <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded text-blue-800 dark:text-blue-200">
+                    demo@meethub.com
+                  </code>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="font-medium">Password:</span>
+                  <code className="bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded text-blue-800 dark:text-blue-200">
+                    demo123
+                  </code>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push('/login')}
+                  className="w-full mt-3 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium"
+                >
+                  Go to Login Page
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Additional Info */}
         <div className="mt-6 text-center text-sm text-gray-600">

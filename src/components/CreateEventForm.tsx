@@ -19,8 +19,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { DateTimePicker } from "@/components/ui/date-picker";
-import { Loader2, Upload, X, Calendar, MapPin, Users, Image as ImageIcon, Building2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Loader2, Upload, X, Calendar, MapPin, Users, Image as ImageIcon, Building2, Info } from "lucide-react";
 import { format } from "date-fns";
+
+// Portfolio Demo: Enable demo event creation
+const DEMO_MODE = true;
 
 // Zod schema for event validation
 const eventSchema = z.object({
@@ -299,6 +303,23 @@ export default function CreateEventForm({ eventId, initialData }: CreateEventFor
       return false;
     }
   };  const onSubmit = async (data: EventFormData) => {
+    if (DEMO_MODE) {
+      // Demo Mode: Simulate event creation
+      setIsLoading(true);
+      
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      setIsLoading(false);
+      toast.success('Event created successfully in demo mode!', {
+        duration: 4000,
+      });
+      
+      // Redirect to my-events page to show the new demo event
+      router.push('/my-events');
+      return;
+    }
+
     try {
       setIsLoading(true);
 
@@ -520,6 +541,17 @@ export default function CreateEventForm({ eventId, initialData }: CreateEventFor
           }
         </CardDescription>
       </CardHeader>      <CardContent>
+        {/* Demo Mode Notice */}
+        {DEMO_MODE && (
+          <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-900/20 mb-6">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800 dark:text-blue-200">
+              <strong>Demo Mode:</strong> Event creation is simulated for portfolio demonstration. 
+              Your event will appear in "My Events" but won't be saved to a real database.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             {/* Title */}
