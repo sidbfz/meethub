@@ -17,9 +17,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    // Create client with anon key
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    // Portfolio Demo: Handle missing environment variables gracefully
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key';
+    
+    // If using placeholder values, return a demo response
+    if (supabaseUrl === 'https://placeholder.supabase.co') {
+      console.log('Demo mode: Simulating moderator action');
+      return NextResponse.json({ 
+        success: true, 
+        message: `Demo: Event ${action === 'approve' ? 'approved' : 'rejected'} successfully` 
+      });
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     // Get the Authorization header

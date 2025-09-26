@@ -8,9 +8,19 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const cookieStore = await cookies()
+    
+    // Portfolio Demo: Handle missing environment variables gracefully
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co'
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-key'
+    
+    // If using placeholder values, redirect to home (demo mode)
+    if (supabaseUrl === 'https://placeholder.supabase.co') {
+      return NextResponse.redirect(new URL('/', requestUrl))
+    }
+    
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      supabaseUrl,
+      supabaseAnonKey,
       {
         cookies: {
           get(name: string) {
