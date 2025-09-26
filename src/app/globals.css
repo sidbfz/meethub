@@ -149,6 +149,11 @@ html {
   scroll-behavior: smooth !important;
   /* Fallback for older browsers */
   -webkit-overflow-scrolling: touch;
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+  /* Ensure proper mobile width */
+  width: 100%;
+  max-width: 100vw;
 }
 
 * {
@@ -158,6 +163,30 @@ html {
 /* Enhance scrolling experience */
 body {
   scroll-behavior: smooth !important;
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+  /* Ensure proper mobile width */
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Mobile specific fixes */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+  }
+  
+  * {
+    max-width: 100% !important;
+  }
+  
+  /* Prevent any element from causing horizontal scroll */
+  div, section, main, header {
+    max-width: 100% !important;
+    overflow-wrap: break-word;
+  }
 }
 
 /* Ensure smooth scrolling works on all containers */

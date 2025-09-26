@@ -49,12 +49,10 @@ export default function GlobalHeader() {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setIsMobileMenuOpen(false);
       }
-      if (infoRef.current && !infoRef.current.contains(event.target as Node)) {
-        setIsInfoOpen(false);
-      }
+      // Info popup now handles clicks via backdrop, so we don't need this check
     };
 
-    if (isMobileMenuOpen || isInfoOpen) {
+    if (isMobileMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
@@ -66,7 +64,22 @@ export default function GlobalHeader() {
   // Close menu when route changes
   useEffect(() => {
     setIsMobileMenuOpen(false);
-  }, [pathname]);  // Don't show header on login, signup, auth callback pages
+    setIsInfoOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when info modal is open
+  useEffect(() => {
+    if (isInfoOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isInfoOpen]);  // Don't show header on login, signup, auth callback pages
   if (pathname?.includes('/login') || pathname?.includes('/signup') || pathname?.includes('/auth/callback')) {
     return null;
   }
@@ -112,14 +125,14 @@ export default function GlobalHeader() {
   const handleBackClick = () => {
     router.back();
   };  return (
-    <div ref={menuRef} className="sticky top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 border-b border-white/20 shadow-lg">
+    <div ref={menuRef} className="sticky top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 border-b border-white/20 shadow-lg overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
       <div className="absolute -top-5 -right-5 w-10 h-10 bg-white/5 rounded-full blur-xl"></div>
       <div className="absolute -bottom-5 -left-5 w-10 h-10 bg-white/5 rounded-full blur-xl"></div>
-        <div className="relative z-10 container mx-auto px-4 py-2">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-2 overflow-hidden">
+        <div className="flex items-center justify-between gap-3 min-w-0">
+          <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
             {/* Back Button - only show on non-home pages */}
             {shouldShowBackButton && (
               <Button
@@ -134,7 +147,7 @@ export default function GlobalHeader() {
               <h1 className="text-base md:text-lg font-bold text-white drop-shadow-sm">
               {getPageTitle()}
             </h1>
-          </div>          <div className="flex items-center gap-1.5">
+          </div>          <div className="flex items-center gap-1.5 flex-shrink-0 min-w-0">
             {/* Info Button - always visible */}
             <div className="relative" ref={infoRef}>
               <Button
@@ -149,8 +162,13 @@ export default function GlobalHeader() {
               
               {/* Info Popup */}
               {isInfoOpen && (
-                <div className="absolute top-full left-0 mt-2 w-80 max-w-[calc(100vw-2rem)] z-50">
-                  <Card className="border-blue-200 bg-white shadow-xl">
+                <>
+                  {/* Backdrop */}
+                  <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setIsInfoOpen(false)} />
+                  
+                  {/* Centered Modal */}
+                  <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-md w-[calc(100%-2rem)] z-50">
+                    <Card className="border-blue-200 bg-white shadow-xl max-h-[80vh] overflow-y-auto">
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h3 className="font-semibold text-lg text-gray-900">MeetHub Portfolio Demo</h3>
@@ -205,7 +223,8 @@ export default function GlobalHeader() {
                       </div>
                     </CardContent>
                   </Card>
-                </div>
+                  </div>
+                </>
               )}
             </div>
             
@@ -367,9 +386,9 @@ export default function GlobalHeader() {
             </div></div>
         </div>        {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden container mx-auto px-4 pb-2">
-            <div className="mt-2 p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20">
-              <div className="space-y-2">
+          <div className="md:hidden w-full px-4 pb-2">
+            <div className="mt-2 p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 max-w-full">
+              <div className="space-y-2 w-full">
               {/* Info Button for Mobile */}
               <Button
                 variant="ghost"
