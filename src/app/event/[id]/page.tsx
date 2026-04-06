@@ -3,7 +3,7 @@ import EventDetailsClient from '@/components/EventDetailsClient';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Portfolio Demo: Using mock data instead of Supabase
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 // Updated interface for Next.js 15+ where params is a Promise
 interface EventPageProps {

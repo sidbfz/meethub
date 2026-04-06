@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 
 // Portfolio Demo: Disable real profile editing
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 interface ProfileData {
   id: string;

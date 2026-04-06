@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase/client'
 import type { User, Session } from '@supabase/supabase-js'
 
 // Portfolio Demo: Enable demo authentication
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 interface AuthState {
   user: User | null

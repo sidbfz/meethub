@@ -8,7 +8,7 @@ import UserProfile from '@/components/UserProfile';
 import { mockUsers, mockEvents } from '@/lib/mock-data';
 
 // Portfolio Demo: Using mock data instead of Supabase
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 interface Props {
   params: Promise<{

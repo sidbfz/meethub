@@ -606,8 +606,8 @@ export default function EventDetailsClient({ eventId, initialEvent }: EventDetai
         </div>
       )}
 
-      {/* Floating Chat Button - Always visible when user can chat */}
-      {(isParticipant || isHost) && (        <>          <Button
+      {/* Floating Chat Button - visible for logged-in users */}
+      {user && !isCancelled && (        <>          <Button
             onClick={() => setIsChatOpen(true)}
             className="fixed bottom-6 right-6 z-40 rounded-full w-14 h-14 shadow-lg"
             size="lg"

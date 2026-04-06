@@ -77,6 +77,8 @@ export const useJoinEvent = () => {
       // Invalidate and refetch related queries
       queryClient.invalidateQueries({ queryKey: ['events'] });
       queryClient.invalidateQueries({ queryKey: ['event', eventId] });
+      queryClient.invalidateQueries({ queryKey: ['event', eventId, 'participants'] });
+      queryClient.invalidateQueries({ queryKey: ['event', eventId, 'participation'] });
     },
     onError: (error: any) => {
       console.error('Error joining event:', error);

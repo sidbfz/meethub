@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, CheckCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 // Zod schema for login validation
@@ -34,59 +34,12 @@ export default function LoginForm() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    // Portfolio Demo: Simulate successful login with demo credentials
-    setIsLoading(true);
-    setAuthError("");
-
-    // Check if demo credentials are used
-    const isDemoLogin = data.email === "demo@meethub.com" && data.password === "demo123";
-    
-    if (isDemoLogin) {
-      // Simulate loading for realistic experience
-      setTimeout(() => {
-        setIsLoading(false);
-        // Create demo user session
-        const demoUser = {
-          id: 'demo-user-1',
-          email: 'demo@meethub.com',
-          user_metadata: { 
-            full_name: 'Demo User',
-            avatar_url: 'https://i.pravatar.cc/150?img=0'
-          },
-          app_metadata: {},
-          aud: 'authenticated',
-          created_at: new Date().toISOString()
-        };
-        
-        // Store demo user in localStorage for persistence across pages
-        localStorage.setItem('demo_user', JSON.stringify(demoUser));
-        localStorage.setItem('demo_authenticated', 'true');
-        
-        // Trigger a custom event to notify other components
-        window.dispatchEvent(new CustomEvent('demo-auth-change', { detail: { user: demoUser } }));
-        
-        // Redirect to homepage
-        router.push("/");
-      }, 1500);
-    } else {
-      // Show demo credentials message for any other login attempt
-      setTimeout(() => {
-        setIsLoading(false);
-        setAuthError("Portfolio Demo: Please use the demo credentials provided below to explore the authenticated features!");
-      }, 1500);
-    }
-
-    return;
-
-    // Original Supabase authentication code (commented out for portfolio demo)
-    /*
     try {
       setIsLoading(true);
       setAuthError("");
@@ -111,7 +64,6 @@ export default function LoginForm() {
     } finally {
       setIsLoading(false);
     }
-    */
   };
 
   return (
@@ -182,49 +134,6 @@ export default function LoginForm() {
             )}
           </Button>
         </form>
-
-        {/* Demo Credentials Card */}
-        <div className="mt-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-          <div className="flex items-start gap-3">
-            <div className="bg-green-100 dark:bg-green-800 rounded-full p-1">
-              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-            </div>
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold text-green-800 dark:text-green-200 mb-2">
-                🎯 Demo Login Credentials
-              </h3>
-              <div className="space-y-2 text-sm text-green-700 dark:text-green-300">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Email:</span>
-                  <code className="bg-green-100 dark:bg-green-800 px-2 py-1 rounded text-green-800 dark:text-green-200">
-                    demo@meethub.com
-                  </code>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Password:</span>
-                  <code className="bg-green-100 dark:bg-green-800 px-2 py-1 rounded text-green-800 dark:text-green-200">
-                    demo123
-                  </code>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // Fill the form with demo credentials
-                    setValue("email", "demo@meethub.com");
-                    setValue("password", "demo123");
-                  }}
-                  className="w-full mt-3 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm font-medium"
-                  disabled={isLoading}
-                >
-                  Fill Demo Credentials
-                </button>
-              </div>
-              <p className="text-xs text-green-600 dark:text-green-400 mt-2">
-                Click "Fill Demo Credentials" then "Sign In" to explore all authenticated features!
-              </p>
-            </div>
-          </div>
-        </div>
 
         {/* Additional Links */}
         <div className="mt-6 space-y-2 text-center text-sm text-gray-600">

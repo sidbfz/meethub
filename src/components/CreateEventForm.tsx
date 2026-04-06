@@ -24,7 +24,7 @@ import { Loader2, Upload, X, Calendar, MapPin, Users, Image as ImageIcon, Buildi
 import { format } from "date-fns";
 
 // Portfolio Demo: Enable demo event creation
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 // Zod schema for event validation
 const eventSchema = z.object({

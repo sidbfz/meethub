@@ -5,7 +5,7 @@ import { mockEvents, mockUsers, mockMessages } from '@/lib/mock-data';
 export const EVENTS_PER_PAGE = 12;
 
 // Portfolio Demo: Using mock data instead of Supabase
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 export const eventsService = {
   // Test Supabase connection (Demo mode always returns true)

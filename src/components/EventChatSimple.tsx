@@ -12,7 +12,7 @@ import { mockMessages } from '@/lib/mock-data';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 // Portfolio Demo: Using mock data instead of real chat
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 interface Message {
   id: string;

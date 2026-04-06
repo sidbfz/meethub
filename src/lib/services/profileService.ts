@@ -2,7 +2,7 @@ import { supabase } from '@/lib/supabase/client';
 import { mockUsers, mockEvents } from '@/lib/mock-data';
 
 // Portfolio Demo: Using mock data instead of Supabase
-const DEMO_MODE = true;
+const DEMO_MODE = false;
 
 export interface UserProfile {
   id: string;
