@@ -1,0 +1,511 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Plus, Grid, Map, User, Users, Calendar, Home as HomeIcon, ArrowLeft, Menu, X, Shield, Info, Code, Database, MessageSquare, ExternalLink } from 'lucide-react';
+import Link from 'next/link';
+import { useAuthStore } from '@/lib/stores/authStore';
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardContent } from "@/components/ui/card";
+
+export default function GlobalHeader() {
+  const { user } = useAuthStore();
+  const pathname = usePathname();
+  const router = useRouter();
+  
+  // Check if user is moderator
+  const isModerator = user?.role === 'moderator';
+
+  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const infoRef = useRef<HTMLDivElement>(null);
+
+  // Listen for view mode changes from other components
+  useEffect(() => {
+    const handleViewModeChange = (event: CustomEvent) => {
+      if (event.detail === 'grid' || event.detail === 'map') {
+        setViewMode(event.detail);
+      }
+    };
+
+    window.addEventListener('viewModeChange', handleViewModeChange as EventListener);
+
+    return () => {
+      window.removeEventListener('viewModeChange', handleViewModeChange as EventListener);
+    };
+  }, []);
+
+  // Reset view mode to grid when returning to homepage
+  useEffect(() => {
+    if (pathname === '/') {
+      setViewMode('grid');
+    }
+  }, [pathname]);  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMobileMenuOpen(false);
+      }
+      // Info popup now handles clicks via backdrop, so we don't need this check
+    };
+
+    if (isMobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMobileMenuOpen]);
+
+  // Close menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+    setIsInfoOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when info modal is open
+  useEffect(() => {
+    if (isInfoOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isInfoOpen]);  // Don't show header on login, signup, auth callback pages
+  if (pathname?.includes('/login') || pathname?.includes('/signup') || pathname?.includes('/auth/callback')) {
+    return null;
+  }
+
+  // Check if we're on the home page to show view toggle
+  const isHomePage = pathname === '/';
+
+  // Emit view mode change event for home page to listen to
+  const handleViewModeChange = (mode: 'grid' | 'map') => {
+    setViewMode(mode);
+    // Dispatch custom event for home page to listen to
+    window.dispatchEvent(new CustomEvent('viewModeChange', { detail: mode }));
+  };// Get page title based on current route
+  const getPageTitle = () => {
+    if (pathname === '/') return 'MeetHub';
+    if (pathname === '/my-events') return 'My Events';
+    if (pathname?.includes('/profile')) return 'Profile';
+    if (pathname === '/create-event') return 'Create Event';
+    if (pathname?.includes('/event/') && pathname?.includes('/edit')) return 'Edit Event';
+    if (pathname?.includes('/event/')) return 'Event Details';
+    if (pathname === '/moderator') return 'Moderator Dashboard';
+    return 'MeetHub';
+  };
+
+  // Check if current page is active
+  const isActivePage = (path: string) => {
+    if (path === '/' && pathname === '/') return true;
+    if (path === '/my-events' && pathname === '/my-events') return true;
+    if (path === '/create-event' && pathname === '/create-event') return true;
+    if (path === '/moderator' && pathname === '/moderator') return true;
+    // For profile, only highlight if viewing own profile
+    if (path === '/profile' && user) {
+      return pathname === `/profile/${user.id}`;
+    }
+    if (path !== '/' && path !== '/profile' && pathname?.startsWith(path)) return true;
+    return false;
+  };
+
+  // Check if we should show the back button (not on home page)
+  const shouldShowBackButton = pathname !== '/';
+
+  // Handle back button click
+  const handleBackClick = () => {
+    router.back();
+  };  return (
+    <div ref={menuRef} className="sticky top-0 left-0 right-0 z-50 bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 border-b border-white/20 shadow-lg overflow-hidden">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-white/10 backdrop-blur-sm"></div>
+      <div className="absolute -top-5 -right-5 w-10 h-10 bg-white/5 rounded-full blur-xl"></div>
+      <div className="absolute -bottom-5 -left-5 w-10 h-10 bg-white/5 rounded-full blur-xl"></div>
+        <div className="relative z-10 w-full max-w-7xl mx-auto px-4 py-2 overflow-hidden">
+        <div className="flex items-center justify-between gap-3 min-w-0">
+          <div className="flex items-center gap-3 min-w-0 flex-shrink-0">
+            {/* Back Button - only show on non-home pages */}
+            {shouldShowBackButton && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBackClick}
+                className="text-white hover:bg-white/20 hover:text-white rounded-md p-1 h-6 w-6 min-h-0 min-w-0"
+              >
+                <ArrowLeft className="w-3 h-3" />
+              </Button>
+            )}
+              <h1 className="text-base md:text-lg font-bold text-white drop-shadow-sm">
+              {getPageTitle()}
+            </h1>
+          </div>          <div className="flex items-center gap-1.5 flex-shrink-0 min-w-0">
+            {/* Info Button - always visible */}
+            <div className="relative" ref={infoRef}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsInfoOpen(!isInfoOpen)}
+                className="text-white hover:bg-white/20 hover:text-white rounded-full p-1 h-7 w-7 min-h-0 min-w-0"
+                title="Project Information"
+              >
+                <Info className="w-4 h-4" />
+              </Button>
+              
+              {/* Info Popup */}
+              {isInfoOpen && (
+                <>
+                  {/* Backdrop */}
+                  <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setIsInfoOpen(false)} />
+                  
+                  {/* Centered Modal */}
+                  <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 max-w-md w-[calc(100%-2rem)] z-50">
+                    <Card className="border-blue-200 bg-white shadow-xl max-h-[80vh] overflow-y-auto">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-lg text-gray-900">MeetHub Portfolio Demo</h3>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsInfoOpen(false)}
+                          className="h-6 w-6 p-0 text-gray-500 hover:text-gray-700"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 gap-3 text-sm">
+                        <div className="flex items-start gap-2">
+                          <Code className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <strong>Frontend:</strong> Next.js 15, TypeScript, Tailwind CSS, shadcn/ui, React Query
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start gap-2">
+                          <Database className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <strong>Backend:</strong> Supabase (PostgreSQL, Auth, Real-time)
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start gap-2">
+                          <MessageSquare className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <strong>Features:</strong> Real-time chat, event management, user authentication
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-3 border-t border-gray-200">
+                        <div className="bg-amber-50 border border-amber-200 rounded-md p-3">
+                          <h4 className="font-medium text-amber-800 mb-2">Why Demo Mode?</h4>
+                          <p className="text-sm text-amber-700">
+                            I disabled the live Supabase connection and simulated all data because this is a portfolio demonstration. 
+                            Nobody actually uses this app, so maintaining a live backend with user registration would be unnecessary overhead.
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="pt-2">
+                        <p className="text-xs text-gray-600">
+                          <strong>Explore the interface</strong> to see all features in action! Authentication is simulated, 
+                          but you can navigate through all pages and interact with the demo data.
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  </div>
+                </>
+              )}
+            </div>
+            
+            {/* View Mode Toggle - always visible on home page */}
+            {isHomePage && (
+              <div className="flex rounded-md bg-white/20 backdrop-blur-sm p-0.5 border border-white/20">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleViewModeChange('grid')}
+                  className={`rounded-sm transition-all text-xs px-1.5 py-0.5 h-6 min-h-0 ${
+                    viewMode === 'grid' 
+                      ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200' 
+                      : 'text-white hover:bg-white/20 hover:text-white'
+                  }`}
+                >
+                  <Grid className="w-3 h-3 mr-0.5" />
+                  Grid
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleViewModeChange('map')}
+                  className={`rounded-sm transition-all text-xs px-1.5 py-0.5 h-6 min-h-0 ${
+                    viewMode === 'map' 
+                      ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200' 
+                      : 'text-white hover:bg-white/20 hover:text-white'
+                  }`}
+                >
+                  <Map className="w-3 h-3 mr-0.5" />
+                  Map
+                </Button>
+              </div>
+            )}
+
+            {/* Desktop Navigation - hidden on mobile */}
+            <div className="hidden md:flex items-center gap-1.5">
+
+              {/* Navigation Links */}
+              {user && (
+                <>                  {/* Main Navigation: Home, My Events, Profile, Moderator */}
+                  <div className="flex rounded-md bg-white/20 backdrop-blur-sm p-0.5 border border-white/20">
+                    <Link href="/">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`rounded-sm transition-all text-xs px-1.5 py-0.5 h-6 min-h-0 ${
+                          isActivePage('/') 
+                            ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200' 
+                            : 'text-white hover:bg-white/20 hover:text-white'
+                        }`}
+                      >
+                        <HomeIcon className="w-3 h-3 mr-0.5" />
+                        Home
+                      </Button>
+                    </Link>
+                    <Link href="/my-events">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`rounded-sm transition-all text-xs px-1.5 py-0.5 h-6 min-h-0 ${
+                          isActivePage('/my-events') 
+                            ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200' 
+                            : 'text-white hover:bg-white/20 hover:text-white'
+                        }`}
+                      >
+                        <Calendar className="w-3 h-3 mr-0.5" />
+                        My Events
+                      </Button>
+                    </Link>
+                    <Link href={`/profile/${user.id}`}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`rounded-sm transition-all text-xs px-1.5 py-0.5 h-6 min-h-0 ${
+                          isActivePage('/profile') 
+                            ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200' 
+                            : 'text-white hover:bg-white/20 hover:text-white'
+                        }`}
+                      >
+                        <User className="w-3 h-3 mr-0.5" />
+                        Profile
+                      </Button>
+                    </Link>
+                    {/* Moderator Dashboard - only show for moderators */}
+                    {isModerator && (
+                      <Link href="/moderator">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className={`rounded-sm transition-all text-xs px-1.5 py-0.5 h-6 min-h-0 ${
+                            isActivePage('/moderator') 
+                              ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200' 
+                              : 'text-white hover:bg-white/20 hover:text-white'
+                          }`}
+                        >
+                          <Shield className="w-3 h-3 mr-0.5" />
+                          Moderator
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+
+                  {/* Create Button - Separate */}
+                  <div className="flex rounded-md bg-white/20 backdrop-blur-sm p-0.5 border border-white/20">
+                    <Link href="/create-event">
+                      <Button 
+                        variant="ghost"
+                        size="sm"
+                        className={`rounded-sm transition-all text-xs px-1.5 py-0.5 h-6 min-h-0 ${
+                          isActivePage('/create-event')
+                            ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200'
+                            : 'text-white hover:bg-white/20 hover:text-white font-medium'
+                        }`}
+                      >
+                        <Plus className="w-3 h-3 mr-0.5" />
+                        Create
+                      </Button>
+                    </Link>
+                  </div>
+                </>
+              )}
+
+              {/* Sign In/Sign Up for non-authenticated users */}
+              {!user && (
+                <>
+                  <div className="flex rounded-md bg-white/20 backdrop-blur-sm p-0.5 border border-white/20">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push('/login')}
+                      className="rounded-sm transition-all text-xs px-1.5 py-0.5 h-6 min-h-0 text-white hover:bg-white/20 hover:text-white"
+                    >
+                      Sign In
+                    </Button>
+                  </div>
+                  <div className="flex rounded-md bg-white/20 backdrop-blur-sm p-0.5 border border-white/20">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => router.push('/signup')}
+                      className="rounded-sm transition-all text-xs px-1.5 py-0.5 h-6 min-h-0 text-white hover:bg-white/20 hover:text-white"
+                    >
+                      Sign Up
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>            {/* Mobile Menu Button */}
+            <div className="md:hidden">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                className="text-white hover:bg-white/20 hover:text-white rounded-md p-1 h-8 w-8 min-h-0 min-w-0"
+              >
+                {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              </Button>
+            </div></div>
+        </div>        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden w-full px-4 pb-2">
+            <div className="mt-2 p-3 bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 max-w-full">
+              <div className="space-y-2 w-full">
+              {/* Info Button for Mobile */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsInfoOpen(!isInfoOpen);
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full justify-start rounded-md transition-all text-sm px-3 py-2 h-9 min-h-0 text-white hover:bg-white/20 hover:text-white"
+              >
+                <Info className="w-4 h-4 mr-2" />
+                Project Info
+              </Button>
+              
+              {/* Navigation Links for authenticated users */}              {user && (                <>                  <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`w-full justify-end rounded-md transition-all text-sm px-3 py-2 h-9 min-h-0 ${
+                        isActivePage('/') 
+                          ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200' 
+                          : 'text-white hover:bg-white/20 hover:text-white'
+                      }`}
+                    >
+                      Home
+                      <HomeIcon className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                  <Link href="/my-events" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`w-full justify-end rounded-md transition-all text-sm px-3 py-2 h-9 min-h-0 ${
+                        isActivePage('/my-events') 
+                          ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200' 
+                          : 'text-white hover:bg-white/20 hover:text-white'
+                      }`}
+                    >
+                      My Events
+                      <Calendar className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                  <Link href={`/profile/${user.id}`} onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`w-full justify-end rounded-md transition-all text-sm px-3 py-2 h-9 min-h-0 ${
+                        isActivePage('/profile') 
+                          ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200' 
+                          : 'text-white hover:bg-white/20 hover:text-white'
+                      }`}
+                    >
+                      Profile
+                      <User className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>                  <Link href="/create-event" onClick={() => setIsMobileMenuOpen(false)}>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={`w-full justify-end rounded-md transition-all text-sm px-3 py-2 h-9 min-h-0 ${
+                        isActivePage('/create-event')
+                          ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200'
+                          : 'text-white hover:bg-white/20 hover:text-white font-medium'
+                      }`}
+                    >
+                      Create Event
+                      <Plus className="w-4 h-4 ml-2" />
+                    </Button>
+                  </Link>
+                  {/* Moderator Dashboard - only show for moderators */}
+                  {isModerator && (
+                    <Link href="/moderator" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`w-full justify-end rounded-md transition-all text-sm px-3 py-2 h-9 min-h-0 ${
+                          isActivePage('/moderator')
+                            ? 'bg-white text-gray-900 shadow-sm hover:bg-gray-200'
+                            : 'text-white hover:bg-white/20 hover:text-white'
+                        }`}
+                      >
+                        Moderator Dashboard
+                        <Shield className="w-4 h-4 ml-2" />
+                      </Button>
+                    </Link>
+                  )}
+                </>
+              )}{/* Sign In/Sign Up for non-authenticated users */}
+              {!user && (
+                <>                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      router.push('/login');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-end rounded-md transition-all text-sm px-3 py-2 h-9 min-h-0 text-white hover:bg-white/20 hover:text-white"
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      router.push('/signup');
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="w-full justify-end rounded-md transition-all text-sm px-3 py-2 h-9 min-h-0 text-white hover:bg-white/20 hover:text-white"
+                  >
+                    Sign Up                  </Button>
+                </>
+              )}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
